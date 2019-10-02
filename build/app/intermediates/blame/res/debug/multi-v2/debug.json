@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "/home/albin/development/discgolf/build/app/intermediates/res/merged/debug/values_values.arsc.flat",
+            "outputFile": "/Users/oscar/Google Drive/Skola/22. PUMA/discgolf/build/app/intermediates/res/merged/debug/values_values.arsc.flat",
             "map": [
                 {
-                    "source": "/home/albin/development/discgolf/android/app/src/main/res/values/styles.xml",
+                    "source": "/Users/oscar/Google Drive/Skola/22. PUMA/discgolf/android/app/src/main/res/values/styles.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
