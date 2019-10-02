@@ -1,0 +1,4 @@
+#Wed Oct 02 11:52:50 CEST 2019
+base.0=/home/albin/development/discgolf/build/app/intermediates/transforms/dexMerger/debug/0
+path.0=classes.dex
+renamed.0=classes.dex
