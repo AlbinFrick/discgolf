@@ -14,18 +14,22 @@ class Main extends StatelessWidget {
       title: 'DiscGolf',
       theme: ThemeData(),
       home: FutureBuilder(
-        future: FirebaseAuth.instance.currentUser(),
+        future: userLoggedIn(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return snapshot.data.displayname != null ? Home() : SignInScreen();
+            return snapshot.data ? Home() : SignInScreen();
           }
-          print(snapshot);
           return Container(
-            color: Colors.yellow,
+            color: Colors.black,
           );
         },
       ),
       routes: routes,
     );
+  }
+
+  userLoggedIn() async {
+    bool loggedIn = await FirebaseAuth.instance.currentUser() != null;
+    return loggedIn;
   }
 }

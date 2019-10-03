@@ -16,9 +16,7 @@ class _HomeState extends State<Home> {
     Container(
       color: Colors.blue,
     ),
-    Container(
-      color: Colors.yellow,
-    )
+    User()
   ];
   List<Widget> headers = [
     AppBar(
@@ -51,15 +49,8 @@ class _HomeState extends State<Home> {
     });
   }
 
-  getName() async {
-    var value = await FirebaseAuth.instance.currentUser();
-
-    print(value);
-  }
-
   @override
   Widget build(BuildContext context) {
-    getName();
     return Scaffold(
         appBar: headers[bodyIndex],
         bottomNavigationBar: bottomBar(),
@@ -75,15 +66,6 @@ class _HomeState extends State<Home> {
                       MaterialPageRoute(builder: (context) => User()),
                     );
                   }),
-                ),
-                Center(
-                  child: RaisedButton(
-                    onPressed: () {
-                      FirebaseAuth.instance.signOut();
-                      Navigator.pushReplacementNamed(context, 'main');
-                    },
-                    child: Text('Sign out'),
-                  ),
                 ),
               ],
             ),
