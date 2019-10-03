@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "42012295543",
+    "firebase_url": "https://discgolf-e29b2.firebaseio.com",
+    "project_id": "discgolf-e29b2",
+    "storage_bucket": "discgolf-e29b2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:42012295543:android:6f8ce9960cc7f45b106172",
+        "android_client_info": {
+          "package_name": "com.example.discgolf"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "42012295543-iupeurcheg362ehhhejee8knvcr90iu2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHfmSfuM4h57K_COb4nFoQHDT1kjanZwQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "42012295543-iupeurcheg362ehhhejee8knvcr90iu2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
