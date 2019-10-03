@@ -8,7 +8,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(primarySwatch: Colors.yellow),
+      theme: ThemeData(primarySwatch: Colors.red),
       home: Home(),
     );
   }
@@ -26,7 +26,33 @@ class _HomeState extends State<Home> {
     ),
     Container(
       color: Colors.blue,
+    ),
+    Container(
+      color: Colors.yellow,
     )
+  ];
+  List<Widget> headers = [
+    AppBar(
+      backgroundColor: Colors.black,
+      title: Text(
+        'Flöde',
+        style: TextStyle(color: Colors.white),
+      ),
+    ),
+    AppBar(
+      backgroundColor: Colors.black,
+      title: Text(
+        'Spela',
+        style: TextStyle(color: Colors.white),
+      ),
+    ),
+    AppBar(
+      backgroundColor: Colors.black,
+      title: Text(
+        'Användare',
+        style: TextStyle(color: Colors.white),
+      ),
+    ),
   ];
   int bodyIndex = 0;
 
@@ -39,18 +65,8 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        bottomNavigationBar: Row(
-          children: <Widget>[
-            TabButton(
-              onPress: changeHomeIndex,
-              index: 0,
-            ),
-            TabButton(
-              onPress: changeHomeIndex,
-              index: 1,
-            )
-          ],
-        ),
+        appBar: headers[bodyIndex],
+        bottomNavigationBar: bottomBar(),
         body: Stack(
           children: <Widget>[
             tabs[bodyIndex],
@@ -65,12 +81,40 @@ class _HomeState extends State<Home> {
           ],
         ));
   }
+
+  bottomBar() {
+    return Container(
+      color: Colors.black,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          TabButton(
+              onPress: changeHomeIndex,
+              index: 0,
+              icon: Icons.menu,
+              focused: bodyIndex == 0),
+          TabButton(
+              onPress: changeHomeIndex,
+              index: 1,
+              icon: Icons.play_arrow,
+              focused: bodyIndex == 1),
+          TabButton(
+              onPress: changeHomeIndex,
+              index: 2,
+              icon: Icons.person,
+              focused: bodyIndex == 2)
+        ],
+      ),
+    );
+  }
 }
 
 class TabButton extends StatelessWidget {
   final Function onPress;
   final int index;
-  TabButton({this.onPress, this.index});
+  final IconData icon;
+  final bool focused;
+  TabButton({this.onPress, this.index, this.icon, this.focused});
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -78,7 +122,11 @@ class TabButton extends StatelessWidget {
         child: Container(
           width: 50,
           height: 50,
-          child: Icon(Icons.access_alarm),
+          child: Icon(
+            icon,
+            color: focused ? Colors.white : Colors.grey,
+            size: 30,
+          ),
         ));
   }
 }
