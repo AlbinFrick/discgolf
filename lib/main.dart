@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:discgolf/screens/home.dart';
+import 'package:discgolf/screens/map.dart';
 import 'package:discgolf/screens/register.dart';
 import 'package:discgolf/screens/signin.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,7 +13,8 @@ void main() => runApp(Main());
 var routes = {
   'home': (context) => Home(),
   'main': (context) => Main(),
-  'register': (context) => RegisterScreen()
+  'register': (context) => RegisterScreen(),
+  'mapTest': (context) => MapTest()
 };
 
 class Main extends StatelessWidget {

@@ -73,9 +73,9 @@ class _HomeState extends State<Home> {
                 Center(
                   child: RaisedButton(
                     onPressed: () {
-                      // counterBloc.increment();
+                      Navigator.pushNamed(context, 'mapTest');
                     },
-                    child: Text('+'),
+                    child: Text('Map'),
                   ),
                 ),
               ],

@@ -6,13 +6,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
 
-class Map extends StatefulWidget {
+class MapTest extends StatefulWidget {
 
  @override
   _MyAppState createState() => _MyAppState();
 }
 
-class _MyAppState extends State<Map> {
+class _MyAppState extends State<MapTest> {
   Completer<GoogleMapController> _controller = Completer();
 
   static const LatLng _center = const LatLng(45.521563, -122.677433);
