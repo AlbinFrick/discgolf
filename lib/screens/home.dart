@@ -1,7 +1,8 @@
-import 'package:discgolf/screens/signin.dart';
+import 'dart:developer';
+
 import 'package:discgolf/screens/user.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -51,6 +52,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    // final CounterBloc counterBloc = Provider.of<CounterBloc>(context);
     return Scaffold(
         appBar: headers[bodyIndex],
         bottomNavigationBar: bottomBar(),
@@ -59,6 +61,7 @@ class _HomeState extends State<Home> {
             tabs[bodyIndex],
             Column(
               children: <Widget>[
+                // Text(counterBloc.counter.toString()),
                 Center(
                   child: RaisedButton(onPressed: () {
                     Navigator.push(
@@ -66,6 +69,14 @@ class _HomeState extends State<Home> {
                       MaterialPageRoute(builder: (context) => User()),
                     );
                   }),
+                ),
+                Center(
+                  child: RaisedButton(
+                    onPressed: () {
+                      // counterBloc.increment();
+                    },
+                    child: Text('+'),
+                  ),
                 ),
               ],
             ),
