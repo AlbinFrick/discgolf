@@ -2,19 +2,19 @@ import 'package:discgolf/screens/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-void main() => runApp(SignInScreen());
+void main() => runApp(RegisterScreen());
 
-class SignInScreen extends StatefulWidget {
+class RegisterScreen extends StatefulWidget {
   @override
-  _SignInScreenState createState() => _SignInScreenState();
+  _RegisterScreenState createState() => _RegisterScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  bool couldNotLoginError = false;
+  bool couldNotRegisterError = false;
 
   @override
   void dispose() {
@@ -28,7 +28,7 @@ class _SignInScreenState extends State<SignInScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text('Logga in'),
+        title: Text('Registrera'),
       ),
       body: Container(
         padding: EdgeInsets.fromLTRB(40, 100, 40, 0),
@@ -45,29 +45,13 @@ class _SignInScreenState extends State<SignInScreen> {
               SizedBox(
                 height: 20,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  RaisedButton(
-                    color: Colors.grey,
-                    child: Container(
-                        width: 70, child: Center(child: Text('Registrera'))),
-                    onPressed: () {
-                      Navigator.pushNamed(context, 'register');
-                    },
-                  ),
-                  SizedBox(
-                    width: 20,
-                  ),
-                  RaisedButton(
-                    color: Colors.orange[400],
-                    child: Container(
-                        width: 70, child: Center(child: Text('Logga in'))),
-                    onPressed: () {
-                      signIn();
-                    },
-                  ),
-                ],
+              RaisedButton(
+                color: Colors.grey,
+                child: Container(
+                    width: 70, child: Center(child: Text('Registrera'))),
+                onPressed: () {
+                  register();
+                },
               )
             ],
           ),
@@ -83,8 +67,8 @@ class _SignInScreenState extends State<SignInScreen> {
         if (value.isEmpty) {
           return 'Saknas';
         }
-        if (couldNotLoginError) {
-          couldNotLoginError = false;
+        if (couldNotRegisterError) {
+          couldNotRegisterError = false;
           return 'Fel lösenord eller användarnamn';
         }
         return null;
@@ -100,16 +84,17 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  signIn() async {
+  register() async {
     try {
       if (_formKey.currentState.validate()) {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
             email: _usernameController.text,
             password: _passwordController.text);
-        Navigator.pushReplacementNamed(context, 'home');
+        Navigator.pop(context);
       }
     } catch (e) {
-      couldNotLoginError = true;
+      print(e);
+      couldNotRegisterError = true;
       _formKey.currentState.validate();
     }
   }
