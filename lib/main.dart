@@ -1,9 +1,12 @@
+import 'dart:developer';
+
 import 'package:discgolf/screens/home.dart';
 import 'package:discgolf/screens/register.dart';
 import 'package:discgolf/screens/signin.dart';
-import 'package:discgolf/screens/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'bloc/user_bloc.dart';
 
 void main() => runApp(Main());
 var routes = {
@@ -15,27 +18,45 @@ var routes = {
 class Main extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'DiscGolf',
-      theme: ThemeData(),
-      home: FutureBuilder(
-        future: userLoggedIn(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return snapshot.data ? Home() : SignInScreen();
-          }
-          return Container(
-            //splash
-            color: Colors.black,
-          );
-        },
+    return ChangeNotifierProvider<UserBloc>.value(
+      value: UserBloc(),
+      child: MaterialApp(
+        title: 'DiscGolf',
+        theme: ThemeData(),
+        home: FutureBuilder(
+          future: userLoggedIn(context),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              if (snapshot.data != null) {
+                addUserIDBloc(context, snapshot.data);
+                return Home();
+              }
+              return SignInScreen();
+            }
+            return Container(
+              //splash
+              color: Colors.black,
+            );
+          },
+        ),
+        routes: routes,
       ),
-      routes: routes,
     );
   }
 
-  userLoggedIn() async {
-    bool loggedIn = await FirebaseAuth.instance.currentUser() != null;
-    return loggedIn;
+  addUserIDBloc(BuildContext context, String uid) {
+    final UserBloc userBloc = Provider.of<UserBloc>(context);
+    userBloc.setUserID(uid);
+  }
+
+  userLoggedIn(BuildContext context) async {
+    print('working');
+    FirebaseUser user = await FirebaseAuth.instance.currentUser();
+    if (user != null) {
+      return user.uid;
+    }
+    return null;
+    // bool loggedIn = user != null;
+    // return loggedIn;
   }
 }
