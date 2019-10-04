@@ -1,8 +1,10 @@
 import 'dart:developer';
 
+import 'package:discgolf/screens/courses.dart';
+import 'package:discgolf/screens/feed.dart';
 import 'package:discgolf/screens/user.dart';
+import 'package:discgolf/utils/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -10,39 +12,33 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  List<Widget> tabs = [
-    Container(
-      color: Colors.red,
-    ),
-    Container(
-      color: Colors.blue,
-    ),
-    User()
-  ];
+  bool dialogDismissed = false;
+  bool registerDialog = false;
+  List<Widget> tabs = [FeedScreen(), CoursesScreen(), UserScreen()];
   List<Widget> headers = [
     AppBar(
-      backgroundColor: Colors.black,
+      backgroundColor: mainColor,
       title: Text(
         'Flöde',
         style: TextStyle(color: Colors.white),
       ),
     ),
     AppBar(
-      backgroundColor: Colors.black,
+      backgroundColor: mainColor,
       title: Text(
         'Spela',
         style: TextStyle(color: Colors.white),
       ),
     ),
     AppBar(
-      backgroundColor: Colors.black,
+      backgroundColor: mainColor,
       title: Text(
         'Användare',
         style: TextStyle(color: Colors.white),
       ),
     ),
   ];
-  int bodyIndex = 0;
+  int bodyIndex = 1;
 
   changeHomeIndex(int index) {
     setState(() {
@@ -50,43 +46,46 @@ class _HomeState extends State<Home> {
     });
   }
 
+  dismissDialog() {
+    setState(() {
+      dialogDismissed = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // final CounterBloc counterBloc = Provider.of<CounterBloc>(context);
+    final Map args = ModalRoute.of(context).settings.arguments;
+    if (args != null) registerDialog = args['registered'] != null;
+    var dialog = AlertDialog(
+      actions: <Widget>[
+        RaisedButton(
+          onPressed: () {
+            dismissDialog();
+          },
+          color: accentColor,
+          child: Text(
+            'Ok',
+            style: TextStyle(color: mainColor),
+          ),
+        )
+      ],
+      title: Text('Registrering lyckades!',
+          style: TextStyle(fontSize: 15, color: Colors.green)),
+    );
     return Scaffold(
         appBar: headers[bodyIndex],
         bottomNavigationBar: bottomBar(),
         body: Stack(
           children: <Widget>[
             tabs[bodyIndex],
-            Column(
-              children: <Widget>[
-                // Text(counterBloc.counter.toString()),
-                Center(
-                  child: RaisedButton(onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => User()),
-                    );
-                  }),
-                ),
-                Center(
-                  child: RaisedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, 'mapTest');
-                    },
-                    child: Text('Map'),
-                  ),
-                ),
-              ],
-            ),
+            registerDialog && !dialogDismissed ? dialog : Container()
           ],
         ));
   }
 
   bottomBar() {
     return Container(
-      color: Colors.black,
+      color: mainColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
@@ -126,7 +125,7 @@ class TabButton extends StatelessWidget {
           height: 50,
           child: Icon(
             icon,
-            color: focused ? Colors.white : Colors.grey,
+            color: focused ? accentColor : Color.fromRGBO(230, 230, 230, 1),
             size: 30,
           ),
         ));

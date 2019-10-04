@@ -1,54 +1,39 @@
-import 'dart:developer';
-
+import 'package:discgolf/screens/course.dart';
 import 'package:discgolf/screens/home.dart';
 import 'package:discgolf/screens/map.dart';
 import 'package:discgolf/screens/register.dart';
 import 'package:discgolf/screens/signin.dart';
+import 'package:discgolf/screens/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'bloc/user_bloc.dart';
 
 void main() => runApp(Main());
 var routes = {
   'home': (context) => Home(),
   'main': (context) => Main(),
   'register': (context) => RegisterScreen(),
-  'mapTest': (context) => MapTest()
+  'mapTest': (context) => MapTest(),
+  'user': (context) => UserScreen(),
+  'course': (context) => CourseScreen()
 };
 
 class Main extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<UserBloc>.value(
-      value: UserBloc(),
+    return MultiProvider(
+      providers: [
+        StreamProvider<FirebaseUser>.value(
+          value: FirebaseAuth.instance.onAuthStateChanged,
+        ),
+      ],
       child: MaterialApp(
         title: 'DiscGolf',
         theme: ThemeData(),
-        home: FutureBuilder(
-          future: userLoggedIn(context),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              if (snapshot.data != null) {
-                addUserIDBloc(context, snapshot.data);
-                return Home();
-              }
-              return SignInScreen();
-            }
-            return Container(
-              //splash
-              color: Colors.black,
-            );
-          },
-        ),
+        home: CheckLogin(),
         routes: routes,
       ),
     );
-  }
-
-  addUserIDBloc(BuildContext context, String uid) {
-    final UserBloc userBloc = Provider.of<UserBloc>(context);
-    userBloc.setUserID(uid);
   }
 
   userLoggedIn(BuildContext context) async {
@@ -57,8 +42,16 @@ class Main extends StatelessWidget {
     if (user != null) {
       return user.uid;
     }
-    return null;
-    // bool loggedIn = user != null;
-    // return loggedIn;
+    return '';
+  }
+}
+
+class CheckLogin extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    if (Provider.of<FirebaseUser>(context) == null) return SignInScreen();
+    return Home();
+    // var user = Provider.of<FirebaseUser>(context);
+    // return user.uid != null ? Home() : SignInScreen();
   }
 }

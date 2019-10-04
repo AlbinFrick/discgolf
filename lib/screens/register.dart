@@ -74,6 +74,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
         return null;
       },
+      autocorrect: false,
+      keyboardType: password ? TextInputType.text : TextInputType.emailAddress,
       obscureText: password,
       decoration: InputDecoration(
           prefix: SizedBox(
@@ -91,7 +93,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         await FirebaseAuth.instance.createUserWithEmailAndPassword(
             email: _usernameController.text,
             password: _passwordController.text);
-        Navigator.pop(context);
+        Navigator.pushReplacementNamed(context, 'home', arguments: {
+          'registered': true,
+        });
       }
     } catch (e) {
       print(e);

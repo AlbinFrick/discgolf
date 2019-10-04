@@ -31,11 +31,14 @@ class _SignInScreenState extends State<SignInScreen> {
         title: Text('Logga in'),
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(40, 100, 40, 0),
+        padding: EdgeInsets.fromLTRB(40, 80, 40, 0),
         child: Form(
           key: _formKey,
           child: Column(
             children: <Widget>[
+              SizedBox(
+                height: 20,
+              ),
               textFormField('Användare', controller: _usernameController),
               SizedBox(
                 height: 20,
@@ -89,6 +92,8 @@ class _SignInScreenState extends State<SignInScreen> {
         }
         return null;
       },
+      autocorrect: false,
+      keyboardType: password ? TextInputType.text : TextInputType.emailAddress,
       obscureText: password,
       decoration: InputDecoration(
           prefix: SizedBox(
