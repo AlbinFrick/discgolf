@@ -5,6 +5,7 @@ admin.initializeApp();
 exports.updateUserCount = functions.auth.user().onCreate(user => {
 	var db = admin.firestore();
 	var collection = db.collection('users');
+	console.log('Adding new user ' + user.email + '...');
 
 	collection
 		.doc(user.uid)
@@ -16,7 +17,9 @@ exports.updateUserCount = functions.auth.user().onCreate(user => {
 			return;
 		})
 		.catch(e => {
+			console.log('Error:');
 			console.log(e);
+			return;
 		});
 });
 //Do what you need to do

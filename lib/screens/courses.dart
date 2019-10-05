@@ -16,7 +16,6 @@ class CoursesScreen extends StatelessWidget {
           stream: Firestore.instance.collection('courses').snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              print(snapshot.data.documents[0]['name']);
               return coursesList(snapshot.data.documents, context);
             }
             return Container();
@@ -28,12 +27,17 @@ class CoursesScreen extends StatelessWidget {
     // return Container();
     return ListView(
       children: courses.map((course) {
-        return courseCard(course, context);
+        return CourseCard(course);
       }).toList(),
     );
   }
+}
 
-  Widget courseCard(DocumentSnapshot course, BuildContext context) {
+class CourseCard extends StatelessWidget {
+  final DocumentSnapshot course;
+  CourseCard(this.course);
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         print(course.documentID);
@@ -43,15 +47,19 @@ class CoursesScreen extends StatelessWidget {
       },
       child: Card(
         elevation: 4,
-        color: mainColor,
+        color: Colors.white,
         child: ListTile(
+          trailing: Icon(
+            Icons.navigate_next,
+            color: mainColor,
+          ),
           title: Text(
             course['name'],
             style: TextStyle(color: accentColor, fontWeight: FontWeight.bold),
           ),
           subtitle: Text(
             course['address'],
-            style: TextStyle(color: textColor),
+            style: TextStyle(color: mainColor),
           ),
         ),
       ),

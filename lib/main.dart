@@ -28,6 +28,7 @@ class Main extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'DiscGolf',
         theme: ThemeData(),
         home: CheckLogin(),
