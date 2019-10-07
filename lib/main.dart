@@ -1,5 +1,6 @@
 import 'package:discgolf/screens/course.dart';
 import 'package:discgolf/screens/home.dart';
+import 'package:discgolf/screens/invite_friends.dart';
 import 'package:discgolf/screens/map.dart';
 import 'package:discgolf/screens/register.dart';
 import 'package:discgolf/screens/signin.dart';
@@ -14,6 +15,7 @@ var routes = {
   'main': (context) => Main(),
   'register': (context) => RegisterScreen(),
   'mapTest': (context) => MapTest(),
+  'inviteFriends': (context) => InviteFriends(),
   'user': (context) => UserScreen(),
   'course': (context) => CourseScreen()
 };

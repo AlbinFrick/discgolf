@@ -114,6 +114,7 @@ class _SignInScreenState extends State<SignInScreen> {
         Navigator.pushReplacementNamed(context, 'home');
       }
     } catch (e) {
+      print(e);
       couldNotLoginError = true;
       _formKey.currentState.validate();
     }

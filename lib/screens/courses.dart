@@ -25,10 +25,26 @@ class CoursesScreen extends StatelessWidget {
 
   coursesList(List<DocumentSnapshot> courses, BuildContext context) {
     // return Container();
-    return ListView(
-      children: courses.map((course) {
-        return CourseCard(course);
-      }).toList(),
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            SizedBox(
+              width: 5,
+            ),
+            Text('Banor',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                )),
+          ],
+        ),
+        Column(
+          children: courses.map((course) {
+            return CourseCard(course);
+          }).toList(),
+        ),
+      ],
     );
   }
 }
@@ -40,18 +56,17 @@ class CourseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        print(course.documentID);
         Navigator.pushNamed(context, 'course', arguments: {
           'course': course,
         });
       },
       child: Card(
         elevation: 4,
-        color: Colors.white,
+        color: mainColor,
         child: ListTile(
           trailing: Icon(
             Icons.navigate_next,
-            color: mainColor,
+            color: textColor,
           ),
           title: Text(
             course['name'],
@@ -59,7 +74,7 @@ class CourseCard extends StatelessWidget {
           ),
           subtitle: Text(
             course['address'],
-            style: TextStyle(color: mainColor),
+            style: TextStyle(color: textColor),
           ),
         ),
       ),
