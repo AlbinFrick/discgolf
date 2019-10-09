@@ -10,7 +10,9 @@ exports.updateUserCount = functions.auth.user().onCreate(user => {
 	collection
 		.doc(user.uid)
 		.set({
-			email: user.email
+			email: user.email,
+			friends: [],
+			friend_requests: []
 		})
 		.then(() => {
 			console.log('Added new user');

@@ -98,12 +98,12 @@ class FriendList extends StatelessWidget {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  if (snapshot.data['friend_requests'] != null && requests) {
+                  if (requests && snapshot.data['friend_requests'] != null) {
                     List<dynamic> friendRequests =
                         snapshot.data['friend_requests'];
                     return Column(
                         children: friendRequestList(friendRequests, uid));
-                  } else if (snapshot.data['friends'] != null) {
+                  } else if (!requests && snapshot.data['friends'] != null) {
                     List<dynamic> friends = snapshot.data['friends'];
                     return Column(children: friendList(friends, uid));
                   }

@@ -58,9 +58,11 @@ class FireUtils {
   static addUserFriend({@required friendID, @required context}) async {
     final String uid = Provider.of<FirebaseUser>(context).uid;
 
-    var friends = await _getUserFriends(uid, context);
-    friends.add(friendID);
-    _updateUser(uid, {'friends': friends});
+    List<String> friends = await _getUserFriends(uid, context);
+    if (friends.contains(friendID)) {
+      friends.add(friendID);
+      _updateUser(uid, {'friends': friends});
+    }
   }
 
   ///This method adds the users id as a friend to another user.
@@ -75,7 +77,6 @@ class FireUtils {
 
   static addUserFriendRequest(
       {@required friendEmail, @required context}) async {
-    print('adding user...');
     final String uid = Provider.of<FirebaseUser>(context).uid;
     QuerySnapshot friend = await Firestore.instance
         .collection('users')
