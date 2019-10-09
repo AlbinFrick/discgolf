@@ -4,6 +4,7 @@ import 'package:discgolf/screens/courses.dart';
 import 'package:discgolf/screens/feed.dart';
 import 'package:discgolf/screens/user.dart';
 import 'package:discgolf/utils/colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class Home extends StatefulWidget {
@@ -14,30 +15,6 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   bool dialogDismissed = false;
   bool registerDialog = false;
-  List<Widget> tabs = [FeedScreen(), CoursesScreen(), UserScreen()];
-  List<Widget> headers = [
-    AppBar(
-      backgroundColor: mainColor,
-      title: Text(
-        'Flöde',
-        style: TextStyle(color: Colors.white),
-      ),
-    ),
-    AppBar(
-      backgroundColor: mainColor,
-      title: Text(
-        'Spela',
-        style: TextStyle(color: Colors.white),
-      ),
-    ),
-    AppBar(
-      backgroundColor: mainColor,
-      title: Text(
-        'Användare',
-        style: TextStyle(color: Colors.white),
-      ),
-    ),
-  ];
   int bodyIndex = 1;
 
   changeHomeIndex(int index) {
@@ -54,6 +31,44 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> tabs = [FeedScreen(), CoursesScreen(), UserScreen()];
+    List<Widget> headers = [
+      AppBar(
+        backgroundColor: mainColor,
+        title: Text(
+          'Flöde',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      AppBar(
+        backgroundColor: mainColor,
+        title: Text(
+          'Spela',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      AppBar(
+        backgroundColor: mainColor,
+        title: Text(
+          'Profil',
+          style: TextStyle(color: Colors.white),
+        ),
+        actions: <Widget>[
+          GestureDetector(
+            onTap: () {
+              FirebaseAuth.instance.signOut();
+              Navigator.pushReplacementNamed(context, 'main');
+            },
+            child: Icon(
+              Icons.exit_to_app,
+            ),
+          ),
+          SizedBox(
+            width: 16,
+          )
+        ],
+      ),
+    ];
     final Map args = ModalRoute.of(context).settings.arguments;
     if (args != null) registerDialog = args['registered'] != null;
     var dialog = AlertDialog(

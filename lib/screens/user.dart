@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/utils/colors.dart';
+import 'package:discgolf/utils/fire_utils.dart';
+import 'package:discgolf/widgets/list_title.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,24 +15,69 @@ class UserScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
+          FriendList(requests: true),
+          SizedBox(
+            height: 5,
+          ),
           FriendList(),
           SizedBox(
-            height: 10,
+            height: 5,
           ),
-          FriendList(requests: true),
-          Text(Provider.of<FirebaseUser>(context).uid),
-          Center(
-            child: RaisedButton(
-              onPressed: () {
-                FirebaseAuth.instance.signOut();
-                Navigator.pushReplacementNamed(context, 'main');
-              },
-              child: Text('Sign out'),
-            ),
+          ListTitle('Lägg till vänner'),
+          SizedBox(
+            height: 5,
           ),
+          FriendSearch(),
         ],
       ),
     ));
+  }
+}
+
+class FriendSearch extends StatelessWidget {
+  TextEditingController _searchController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    search() {
+      print('in search');
+      String input = _searchController.text;
+      if (input.length > 0) {
+        FireUtils.addUserFriendRequest(
+            friendEmail: _searchController.text, context: context);
+      }
+    }
+
+    return Container(
+        padding: EdgeInsets.symmetric(horizontal: 4),
+        child: Stack(
+          children: <Widget>[
+            TextFormField(
+                controller: _searchController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                    prefix: SizedBox(
+                      width: 10,
+                    ),
+                    labelText: 'Email',
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                    ))),
+            Positioned(
+              right: 10,
+              top: 16,
+              child: GestureDetector(
+                onTap: () {
+                  search();
+                },
+                child: Icon(
+                  Icons.search,
+                  color: accentColor,
+                ),
+              ),
+            ),
+          ],
+        ));
   }
 }
 
@@ -43,18 +90,6 @@ class FriendList extends StatelessWidget {
 
     return Column(
       children: <Widget>[
-        Row(
-          children: <Widget>[
-            SizedBox(
-              width: 5,
-            ),
-            Text(requests ? 'Förfrågningar' : 'Vänner',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                )),
-          ],
-        ),
         Container(
           child: StreamBuilder(
               stream: Firestore.instance
@@ -67,16 +102,10 @@ class FriendList extends StatelessWidget {
                     List<dynamic> friendRequests =
                         snapshot.data['friend_requests'];
                     return Column(
-                        children: friendRequests.map<Widget>((friendID) {
-                      return FriendRequestCard(friendID, uid, friendRequests);
-                    }).toList());
-                  }
-                  if (snapshot.data['friends'] != null && !requests) {
-                    return Column(
-                        children:
-                            snapshot.data['friends'].map<Widget>((friend) {
-                      return FriendCard(friend);
-                    }).toList());
+                        children: friendRequestList(friendRequests, uid));
+                  } else if (snapshot.data['friends'] != null) {
+                    List<dynamic> friends = snapshot.data['friends'];
+                    return Column(children: friendList(friends, uid));
                   }
                 }
                 return Container();
@@ -85,6 +114,23 @@ class FriendList extends StatelessWidget {
       ],
     );
   }
+
+  friendRequestList(List<dynamic> friendRequests, String uid) {
+    List<Widget> friendReqWidgets = friendRequests.map<Widget>((friendID) {
+      return FriendRequestCard(friendID, uid, friendRequests);
+    }).toList();
+    if (friendReqWidgets.length > 0)
+      friendReqWidgets.insert(0, ListTitle('Förfrågningar'));
+    return friendReqWidgets;
+  }
+
+  friendList(List<dynamic> friends, String uid) {
+    List<Widget> friendWidgets = friends.map<Widget>((friendID) {
+      return FriendCard(friendID);
+    }).toList();
+    if (friendWidgets.length > 0) friendWidgets.insert(0, ListTitle('Vänner'));
+    return friendWidgets;
+  }
 }
 
 class FriendCard extends StatelessWidget {
@@ -92,15 +138,35 @@ class FriendCard extends StatelessWidget {
   FriendCard(this.friend);
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      color: mainColor,
-      child: ListTile(
-          trailing: Icon(
-            Icons.navigate_next,
-            color: textColor,
-          ),
-          title: getFriendName(friend)),
+    return Padding(
+      padding: EdgeInsets.all(4),
+      child: Dismissible(
+        direction: DismissDirection.endToStart,
+        key: Key(friend),
+        onDismissed: (direction) {
+          FireUtils.removeUserFriend(friendID: friend, context: context);
+        },
+        background: Card(
+          color: Colors.red[800],
+          child: Align(
+              alignment: Alignment(0.95, 0),
+              child: Icon(
+                Icons.delete,
+                color: Colors.white,
+              )),
+        ),
+        child: Card(
+          margin: EdgeInsets.all(0),
+          elevation: 4,
+          color: mainColor,
+          child: ListTile(
+              trailing: Icon(
+                Icons.navigate_next,
+                color: textColor,
+              ),
+              title: getFriendName(friend)),
+        ),
+      ),
     );
   }
 }
@@ -125,9 +191,12 @@ class FriendRequestCard extends StatelessWidget {
               children: <Widget>[
                 GestureDetector(
                   onTap: () {
-                    addFriend(friendID, uid);
-                    removeRequest(
-                        friendID, uid, List<String>.from(friendRequests));
+                    FireUtils.addUserFriend(
+                        friendID: friendID, context: context);
+                    FireUtils.addUserToFriend(
+                        friendID: friendID, context: context);
+                    FireUtils.removeUserFriendRequest(
+                        friendID: friendID, context: context);
                   },
                   child: Icon(
                     Icons.check,
@@ -136,8 +205,8 @@ class FriendRequestCard extends StatelessWidget {
                 ),
                 GestureDetector(
                   onTap: () {
-                    removeRequest(
-                        friendID, uid, List<String>.from(friendRequests));
+                    FireUtils.removeUserFriendRequest(
+                        friendID: friendID, context: context);
                   },
                   child: Icon(
                     Icons.close,
@@ -163,23 +232,4 @@ getFriendName(String friendID) {
           style: TextStyle(color: accentColor, fontWeight: FontWeight.bold));
     },
   );
-}
-
-addFriend(String friendID, String uid) async {
-  DocumentSnapshot user =
-      await Firestore.instance.collection('users').document(uid).get();
-  List<String> friends = List<String>.from(user.data['friends']);
-  friends.add(friendID);
-  Firestore.instance
-      .collection('users')
-      .document(uid)
-      .updateData({'friends': friends});
-}
-
-removeRequest(String friendID, String uid, List<dynamic> friendRequests) {
-  friendRequests.remove(friendID);
-  Firestore.instance
-      .collection('users')
-      .document(uid)
-      .updateData({'friend_requests': friendRequests});
 }
