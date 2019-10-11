@@ -34,52 +34,97 @@ class UserScreen extends StatelessWidget {
   }
 }
 
-class FriendSearch extends StatelessWidget {
-  final TextEditingController _searchController = TextEditingController();
+class FriendSearch extends StatefulWidget {
+  @override
+  _FriendSearchState createState() => _FriendSearchState();
+}
 
+class _FriendSearchState extends State<FriendSearch> {
+  final TextEditingController _searchController = TextEditingController();
+  String response = '';
+  Color resposeColor = Colors.black;
   @override
   Widget build(BuildContext context) {
-    search() {
+    search() async {
       print('in search');
       String input = _searchController.text;
-      if (input.length > 0) {
-        FireUtils.addUserFriendRequest(
+      if (input.length > 0 && input.contains('@')) {
+        print('going into fire');
+        bool success = await FireUtils.addUserFriendRequest(
             friendEmail: _searchController.text, context: context);
-        _searchController.text = '';
+        print(success);
+        if (success) {
+          _searchController.text = '';
+          response = 'Förfrågan skickad!';
+          resposeColor = Colors.green;
+          FocusScope.of(context).requestFocus(FocusNode());
+        } else {
+          print('no can do');
+          response = 'Kunde inte lägga till.';
+          resposeColor = Colors.red;
+        }
+      } else {
+        response = 'Vänligen skriv en email.';
+        resposeColor = Colors.red;
       }
+      setState(() {});
     }
 
     return Container(
         padding: EdgeInsets.symmetric(horizontal: 4),
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            TextFormField(
-                onFieldSubmitted: (input) {
-                  search();
-                },
-                controller: _searchController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                    prefix: SizedBox(
-                      width: 10,
+            Stack(
+              children: <Widget>[
+                TextFormField(
+                    onFieldSubmitted: (input) {
+                      search();
+                    },
+                    controller: _searchController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                        labelStyle: TextStyle(color: Colors.grey[700]),
+                        prefix: SizedBox(
+                          width: 10,
+                        ),
+                        labelText: 'Email',
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: accentColor),
+                        ),
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(color: mainColor),
+                        ))),
+                Positioned(
+                  right: 10,
+                  top: 6,
+                  child: GestureDetector(
+                    onTap: () {
+                      search();
+                    },
+                    child: Center(
+                      child: RaisedButton(
+                        onPressed: () => search(),
+                        color: mainColor,
+                        child: Text('Lägg till',
+                            style: TextStyle(
+                                fontSize: 15,
+                                color: accentColor,
+                                fontWeight: FontWeight.bold)),
+                      ),
                     ),
-                    labelText: 'Email',
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black),
-                    ))),
-            Positioned(
-              right: 10,
-              top: 16,
-              child: GestureDetector(
-                onTap: () {
-                  search();
-                },
-                child: Icon(
-                  Icons.play_arrow,
-                  color: accentColor,
+                    // child: Icon(
+                    //   Icons.play_arrow,
+                    //   color: accentColor,
+                    // ),
+                  ),
                 ),
-              ),
+              ],
             ),
+            SizedBox(
+              height: 5,
+            ),
+            Text(response, style: TextStyle(color: resposeColor)),
           ],
         ));
   }

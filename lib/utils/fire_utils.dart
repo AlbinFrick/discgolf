@@ -84,6 +84,7 @@ class FireUtils {
         .getDocuments();
     if (friend.documents.length == 0) {
       print('failed to find user');
+      print('returning false');
       return false;
     }
     var friendRequests = friend.documents[0]['friend_requests'];
@@ -98,5 +99,6 @@ class FireUtils {
     _updateUser(
         friend.documents[0].documentID, {'friend_requests': friendRequests});
     print('User added');
+    return true;
   }
 }
