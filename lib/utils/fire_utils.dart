@@ -86,8 +86,13 @@ class FireUtils {
       print('failed to find user');
       return false;
     }
-    List<dynamic> friendRequests =
-        List<String>.from(friend.documents[0]['friend_requests']);
+    var friendRequests = friend.documents[0]['friend_requests'];
+    if (friendRequests is List) {
+      friendRequests =
+          List<String>.from(friend.documents[0]['friend_requests']);
+    } else {
+      friendRequests = List<String>();
+    }
     if (friendRequests == null) {
       friendRequests = List();
     }
