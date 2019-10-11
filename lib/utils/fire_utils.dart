@@ -59,7 +59,7 @@ class FireUtils {
     final String uid = Provider.of<FirebaseUser>(context).uid;
 
     List<String> friends = await _getUserFriends(uid, context);
-    if (friends.contains(friendID)) {
+    if (!friends.contains(friendID)) {
       friends.add(friendID);
       _updateUser(uid, {'friends': friends});
     }
@@ -87,15 +87,13 @@ class FireUtils {
       return false;
     }
     var friendRequests = friend.documents[0]['friend_requests'];
-    if (friendRequests is List) {
+    if (friendRequests is List && !friendRequests.contains(uid)) {
       friendRequests =
           List<String>.from(friend.documents[0]['friend_requests']);
     } else {
       friendRequests = List<String>();
     }
-    if (friendRequests == null) {
-      friendRequests = List();
-    }
+
     friendRequests.add(uid);
     _updateUser(
         friend.documents[0].documentID, {'friend_requests': friendRequests});

@@ -35,7 +35,7 @@ class UserScreen extends StatelessWidget {
 }
 
 class FriendSearch extends StatelessWidget {
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +45,7 @@ class FriendSearch extends StatelessWidget {
       if (input.length > 0) {
         FireUtils.addUserFriendRequest(
             friendEmail: _searchController.text, context: context);
+        _searchController.text = '';
       }
     }
 
@@ -53,6 +54,9 @@ class FriendSearch extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             TextFormField(
+                onFieldSubmitted: (input) {
+                  search();
+                },
                 controller: _searchController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
@@ -71,7 +75,7 @@ class FriendSearch extends StatelessWidget {
                   search();
                 },
                 child: Icon(
-                  Icons.search,
+                  Icons.play_arrow,
                   color: accentColor,
                 ),
               ),
