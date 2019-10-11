@@ -1,6 +1,10 @@
+import 'dart:async';
+
+import 'package:animated_stream_list/animated_stream_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:discgolf/utils/fire_utils.dart';
+import 'package:discgolf/widgets/friend_search.dart';
 import 'package:discgolf/widgets/list_title.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,123 +14,49 @@ class UserScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Container(
-      padding: EdgeInsets.all(10),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: <Widget>[
-          FriendList(requests: true),
-          SizedBox(
-            height: 5,
+        body: Stack(
+      children: <Widget>[
+        Container(
+          height: MediaQuery.of(context).size.height - 130, //- 108,
+          width: MediaQuery.of(context).size.width,
+          child: ListView(
+            children: <Widget>[
+              FriendList(requests: true),
+              SizedBox(
+                height: 5,
+              ),
+              FriendList(),
+              SizedBox(
+                height: 5,
+              ),
+            ],
+            // ),
           ),
-          FriendList(),
-          SizedBox(
-            height: 5,
-          ),
-          ListTitle('Lägg till vänner'),
-          SizedBox(
-            height: 5,
-          ),
-          FriendSearch(),
-        ],
-      ),
-    ));
-  }
-}
-
-class FriendSearch extends StatefulWidget {
-  @override
-  _FriendSearchState createState() => _FriendSearchState();
-}
-
-class _FriendSearchState extends State<FriendSearch> {
-  final TextEditingController _searchController = TextEditingController();
-  String response = '';
-  Color resposeColor = Colors.black;
-  @override
-  Widget build(BuildContext context) {
-    search() async {
-      print('in search');
-      String input = _searchController.text;
-      if (input.length > 0 && input.contains('@')) {
-        print('going into fire');
-        bool success = await FireUtils.addUserFriendRequest(
-            friendEmail: _searchController.text, context: context);
-        print(success);
-        if (success) {
-          _searchController.text = '';
-          response = 'Förfrågan skickad!';
-          resposeColor = Colors.green;
-          FocusScope.of(context).requestFocus(FocusNode());
-        } else {
-          print('no can do');
-          response = 'Kunde inte lägga till.';
-          resposeColor = Colors.red;
-        }
-      } else {
-        response = 'Vänligen skriv en email.';
-        resposeColor = Colors.red;
-      }
-      setState(() {});
-    }
-
-    return Container(
-        padding: EdgeInsets.symmetric(horizontal: 4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Stack(
+        ),
+        Positioned(
+          bottom: 0,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            width: MediaQuery.of(context).size.width,
+            height: 108,
+            // color: ThemeData.scaffoldBackgroundColor,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: <Widget>[
-                TextFormField(
-                    onFieldSubmitted: (input) {
-                      search();
-                    },
-                    controller: _searchController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                        labelStyle: TextStyle(color: Colors.grey[700]),
-                        prefix: SizedBox(
-                          width: 10,
-                        ),
-                        labelText: 'Email',
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: accentColor),
-                        ),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: mainColor),
-                        ))),
-                Positioned(
-                  right: 10,
-                  top: 6,
-                  child: GestureDetector(
-                    onTap: () {
-                      search();
-                    },
-                    child: Center(
-                      child: RaisedButton(
-                        onPressed: () => search(),
-                        color: mainColor,
-                        child: Text('Lägg till',
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: accentColor,
-                                fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    // child: Icon(
-                    //   Icons.play_arrow,
-                    //   color: accentColor,
-                    // ),
-                  ),
+                ListTitle('Lägg till vän'),
+                SizedBox(
+                  height: 5,
+                ),
+                FriendSearch(),
+                SizedBox(
+                  height: 5,
                 ),
               ],
             ),
-            SizedBox(
-              height: 5,
-            ),
-            Text(response, style: TextStyle(color: resposeColor)),
-          ],
-        ));
+          ),
+        ),
+      ],
+    ));
   }
 }
 
@@ -137,30 +67,33 @@ class FriendList extends StatelessWidget {
   Widget build(BuildContext context) {
     final String uid = Provider.of<FirebaseUser>(context).uid;
 
-    return Column(
-      children: <Widget>[
-        Container(
-          child: StreamBuilder(
-              stream: Firestore.instance
-                  .collection('users')
-                  .document(uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  if (requests && snapshot.data['friend_requests'] != null) {
-                    List<dynamic> friendRequests =
-                        snapshot.data['friend_requests'];
-                    return Column(
-                        children: friendRequestList(friendRequests, uid));
-                  } else if (!requests && snapshot.data['friends'] != null) {
-                    List<dynamic> friends = snapshot.data['friends'];
-                    return Column(children: friendList(friends, uid));
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 10),
+      child: Column(
+        children: <Widget>[
+          Container(
+            child: StreamBuilder(
+                stream: Firestore.instance
+                    .collection('users')
+                    .document(uid)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    if (requests && snapshot.data['friend_requests'] != null) {
+                      List<dynamic> friendRequests =
+                          snapshot.data['friend_requests'];
+                      return Column(
+                          children: friendRequestList(friendRequests, uid));
+                    } else if (!requests && snapshot.data['friends'] != null) {
+                      List<dynamic> friends = snapshot.data['friends'];
+                      return Column(children: friendList(friends, uid));
+                    }
                   }
-                }
-                return Container();
-              }),
-        ),
-      ],
+                  return Container();
+                }),
+          ),
+        ],
+      ),
     );
   }
 
@@ -184,6 +117,7 @@ class FriendList extends StatelessWidget {
 
 class FriendCard extends StatelessWidget {
   final String friend;
+
   FriendCard(this.friend);
   @override
   Widget build(BuildContext context) {
@@ -209,10 +143,10 @@ class FriendCard extends StatelessWidget {
           elevation: 4,
           color: mainColor,
           child: ListTile(
-              trailing: Icon(
-                Icons.navigate_next,
-                color: textColor,
-              ),
+              // trailing: Icon(
+              //   Icons.navigate_next,
+              //   color: textColor,
+              // ),
               title: getFriendName(friend)),
         ),
       ),

@@ -7,6 +7,7 @@ import 'package:discgolf/screens/signin.dart';
 import 'package:discgolf/screens/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as prefix0;
 import 'package:provider/provider.dart';
 
 void main() => runApp(Main());
@@ -32,7 +33,7 @@ class Main extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'DiscGolf',
-        theme: ThemeData(),
+        // theme: appTheme(),
         home: CheckLogin(),
         routes: routes,
       ),
@@ -57,4 +58,13 @@ class CheckLogin extends StatelessWidget {
     // var user = Provider.of<FirebaseUser>(context);
     // return user.uid != null ? Home() : SignInScreen();
   }
+}
+
+ThemeData appTheme() {
+  final ThemeData theme = prefix0.ThemeData.dark();
+
+  return theme.copyWith(
+      primaryColor: Colors.black,
+      scaffoldBackgroundColor: Colors.grey,
+      secondaryHeaderColor: Colors.blue);
 }
