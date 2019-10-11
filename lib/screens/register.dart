@@ -14,14 +14,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _firstnameController = TextEditingController();
+  final TextEditingController _lastnameController = TextEditingController();
 
   bool couldNotRegisterError = false;
 
   @override
   void dispose() {
     super.dispose();
-    _passwordController.dispose();
     _usernameController.dispose();
+    _passwordController.dispose();
+    _firstnameController.dispose();
+    _lastnameController.dispose();
   }
 
   @override
@@ -31,20 +35,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: Colors.black,
         title: Text('Registrera'),
       ),
+      
       body: Container(
+        child: new SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        reverse: true,
         padding: EdgeInsets.fromLTRB(40, 100, 40, 0),
         child: Form(
           key: _formKey,
           child: Column(
             children: <Widget>[
-              textFormField('Användare', controller: _usernameController),
+              textFormField('E-mail', username: true, controller: _usernameController),
               SizedBox(
-                height: 20,
+                height: 15,
+              ),
+              textFormField('Förnamn', controller: _firstnameController),
+              SizedBox(
+                height: 15,
+              ),
+              textFormField('Efternamn', controller: _lastnameController),
+              SizedBox(
+                height: 15,
               ),
               textFormField('Lösenord',
                   password: true, controller: _passwordController),
               SizedBox(
-                height: 20,
+                height: 15,
               ),
               RaisedButton(
                 color: Colors.grey,
@@ -58,10 +74,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
       ),
-    );
+     ),
+    ); 
   }
 
-  textFormField(label, {bool password = false, @required controller}) {
+  textFormField(label, {bool password = false, username= false, @required controller}) {
     return TextFormField(
       controller: controller,
       validator: (value) {
@@ -70,12 +87,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
         if (couldNotRegisterError) {
           couldNotRegisterError = false;
-          return 'Fel lösenord eller användarnamn';
+          return 'Ett fel uppstod vid registrering';
         }
         return null;
       },
       autocorrect: false,
-      keyboardType: password ? TextInputType.text : TextInputType.emailAddress,
+      keyboardType: username ? TextInputType.emailAddress : TextInputType.text,
       obscureText: password,
       decoration: InputDecoration(
           prefix: SizedBox(
