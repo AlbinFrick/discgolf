@@ -101,25 +101,30 @@ class _HomeState extends State<Home> {
   bottomBar() {
     return Container(
       color: mainColor,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget>[
-          TabButton(
-              onPress: changeHomeIndex,
-              index: 0,
-              icon: Icons.menu,
-              focused: bodyIndex == 0),
-          TabButton(
-              onPress: changeHomeIndex,
-              index: 1,
-              icon: Icons.play_arrow,
-              focused: bodyIndex == 1),
-          TabButton(
-              onPress: changeHomeIndex,
-              index: 2,
-              icon: Icons.person,
-              focused: bodyIndex == 2)
-        ],
+      child: SafeArea(
+        child: Container(
+          color: mainColor,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              TabButton(
+                  onPress: changeHomeIndex,
+                  index: 0,
+                  icon: Icons.menu,
+                  focused: bodyIndex == 0),
+              TabButton(
+                  onPress: changeHomeIndex,
+                  index: 1,
+                  icon: Icons.play_arrow,
+                  focused: bodyIndex == 1),
+              TabButton(
+                  onPress: changeHomeIndex,
+                  index: 2,
+                  icon: Icons.person,
+                  focused: bodyIndex == 2)
+            ],
+          ),
+        ),
       ),
     );
   }

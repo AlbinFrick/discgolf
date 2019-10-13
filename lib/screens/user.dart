@@ -38,7 +38,7 @@ class UserScreen extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 10),
             width: MediaQuery.of(context).size.width,
-            height: 108,
+            // height: 100,
             // color: ThemeData.scaffoldBackgroundColor,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
