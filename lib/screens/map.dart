@@ -20,7 +20,7 @@ class _MyAppState extends State<MapTest> {
   final Set<Polyline> _polyline = {};
 
   //add your lat and lng where you wants to draw polyline
-  
+
   List<LatLng> latlng = List();
   LatLng teePosition = LatLng(63.836436, 20.314299);
   LatLng goalPosition = LatLng(63.836826, 20.313357);
@@ -39,14 +39,12 @@ class _MyAppState extends State<MapTest> {
     checkPermission();
     StreamSubscription positionStream = _geolocator
         .getPositionStream(locationOptions)
-        .listen((Position position) {
-      
-    });
+        .listen((Position position) {});
     timer =
         Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
 
     latlng.add(teePosition);
-    
+
     BitmapDescriptor.fromAssetImage(
             ImageConfiguration(size: Size(2, 2)), 'assets/images/icon_goal.png')
         .then((onValue) {
@@ -134,14 +132,19 @@ class _MyAppState extends State<MapTest> {
   }
 
   void _onAddMarkerButtonPressed() {
-    latlng.add(LatLng(_position.latitude,_position.longitude));
+    List<PatternItem> patterns = List();
+    patterns.add(PatternItem.dash(20));
+    patterns.add(PatternItem.gap(10));
+    patterns.add(PatternItem.dot);
+    latlng.add(LatLng(_position.latitude, _position.longitude));
     setState(() {
       _polyline.add(Polyline(
         polylineId: PolylineId(_position.toString()),
         visible: true,
         //latlng is List<LatLng>
+        patterns: patterns,
         points: latlng,
-        color: Colors.blue,
+        color: Colors.red,
         width: 2,
       ));
     });
