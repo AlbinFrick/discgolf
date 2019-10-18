@@ -25,7 +25,6 @@ class InviteFriends extends StatelessWidget {
           .document(friendIDs[i])
           .get();
       user.data['index'] = i;
-      // if (user != null && user.data != null)
       friends.add(user.data);
     }
     return friends;
@@ -65,13 +64,12 @@ class FriendAdder extends StatefulWidget {
 
 class _FriendAdderState extends State<FriendAdder> {
   List addedPlayers = List();
-  var user;
 
   @override
   void initState() {
     super.initState();
     // loadUser();
-    addedPlayers.add(widget.user);
+    addedPlayers.add(widget.user.data);
   }
 
   // loadUser(uid) async {
@@ -87,33 +85,51 @@ class _FriendAdderState extends State<FriendAdder> {
   Widget build(BuildContext context) {
     // final String uid = Provider.of<FirebaseUser>(context).uid;
     // if (user == null) loadUser(uid);
-    return Container(
-      padding: EdgeInsets.fromLTRB(5, 5, 5, 0),
-      child: Column(
-        children: <Widget>[
-          SizedBox(height: 5),
-          ListTitle('Spelare'),
-          PlayersList(
-              players: addedPlayers,
-              onRemove: (player, e) {
-                setState(() {
-                  widget.friends.insert(player['index'], player);
-                  addedPlayers.remove(player);
-                });
-              }),
-          ListTitle('Vänner'),
-          Flexible(
-            flex: 2,
-            child: FriendList(
-                friends: widget.friends,
-                onAdd: (player) {
-                  setState(() {
-                    addedPlayers.add(player);
-                  });
-                }),
+    return Stack(
+      children: <Widget>[
+        Container(
+          padding: EdgeInsets.fromLTRB(5, 5, 5, 0),
+          child: Column(
+            children: <Widget>[
+              SizedBox(height: 5),
+              ListTitle('Spelare'),
+              PlayersList(
+                  players: addedPlayers,
+                  onRemove: (player, e) {
+                    setState(() {
+                      widget.friends.insert(player['index'], player);
+                      addedPlayers.remove(player);
+                    });
+                  }),
+              ListTitle('Vänner'),
+              Flexible(
+                flex: 2,
+                child: FriendList(
+                    friends: widget.friends,
+                    onAdd: (player) {
+                      setState(() {
+                        addedPlayers.add(player);
+                      });
+                    }),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          right: 10,
+          bottom: 10,
+          child: FloatingActionButton(
+            backgroundColor: mainColor,
+            child: Icon(
+              Icons.play_arrow,
+              color: accentColor,
+            ),
+            onPressed: () {
+              addedPlayers.forEach((f) => print(f['email']));
+            },
+          ),
+        )
+      ],
     );
   }
 }
@@ -130,10 +146,10 @@ class PlayersList extends StatelessWidget {
       itemCount: players.length,
       itemBuilder: (context, index) {
         return FriendCard(
-          dismissable: true,
+          dismissable: players[index]['index'] != null,
           friend: players[index],
           onAdd: (a, b) {
-            onRemove(players[index], 'a');
+            if (players[index]['index'] != null) onRemove(players[index], 'a');
           },
         );
         // );
@@ -163,7 +179,10 @@ class FriendList extends StatelessWidget {
         var friend = friends[index];
         if (friend != null)
           return FriendCard(
-              friend: friends[index], onAdd: onAddList, index: index);
+              friend: friends[index],
+              onAdd: onAddList,
+              index: index,
+              friendList: true);
         return Container();
       },
     ));
@@ -174,11 +193,13 @@ class FriendCard extends StatelessWidget {
   final Function onAdd;
   final friend;
   final bool dismissable;
+  final bool friendList;
   final int index;
   FriendCard(
       {@required this.friend,
       @required this.onAdd,
       this.index,
+      this.friendList = false,
       this.dismissable = false});
   @override
   Widget build(BuildContext context) {
@@ -187,11 +208,19 @@ class FriendCard extends StatelessWidget {
       color: mainColor,
       margin: EdgeInsets.all(dismissable ? 0 : 4),
       child: ListTile(
+          trailing: friendList
+              ? Icon(
+                  Icons.add,
+                  color: accentColor,
+                )
+              : SizedBox(
+                  width: 0,
+                ),
           title: Text(
-        friend['email'],
-        style: TextStyle(
-            fontSize: 15, color: accentColor, fontWeight: FontWeight.bold),
-      )),
+            friend['email'],
+            style: TextStyle(
+                fontSize: 15, color: accentColor, fontWeight: FontWeight.bold),
+          )),
     );
     return dismissable
         ? Padding(
