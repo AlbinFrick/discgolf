@@ -48,11 +48,13 @@ class CourseScreen extends StatelessWidget {
   }
 
   buildTracks(List<dynamic> tracks, BuildContext context) {
-    print(tracks);
     return tracks.map<Widget>((track) {
       return GestureDetector(
-        onTap: () =>
-            Navigator.pushNamed(context, 'inviteFriends', arguments: track),
+        onTap: () {
+          print('going to invite');
+          Navigator.pushNamed(context, 'inviteFriends', arguments: track);
+          // Navigator.pushNamed(context, 'inviteFriends');
+        },
         child: Card(
           color: mainColor,
           child: ListTile(

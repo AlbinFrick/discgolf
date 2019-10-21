@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:animated_stream_list/animated_stream_list.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:discgolf/utils/fire_utils.dart';

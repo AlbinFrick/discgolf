@@ -8,24 +8,24 @@ import 'package:discgolf/screens/signin.dart';
 import 'package:discgolf/screens/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart' as prefix0;
 import 'package:provider/provider.dart';
 
 void main() => runApp(Main());
-var routes = {
-  'home': (context) => Home(),
-  'main': (context) => Main(),
-  'register': (context) => RegisterScreen(),
-  'mapTest': (context) => MapTest(),
-  'inviteFriends': (context) => InviteFriends(),
-  'user': (context) => UserScreen(),
-  'course': (context) => CourseScreen(),
-  'play': (context) => PlayScreen()
-};
 
 class Main extends StatelessWidget {
+  var routes = {
+    'home': (context) => Home(),
+    'main': (context) => Main(),
+    'register': (context) => RegisterScreen(),
+    'play': (context) => PlayScreen(),
+    'mapTest': (context) => MapTest(),
+    'inviteFriends': (context) => InviteFriends(),
+    'user': (context) => UserScreen(),
+    'course': (context) => CourseScreen()
+  };
   @override
   Widget build(BuildContext context) {
+    print(routes);
     return MultiProvider(
       providers: [
         StreamProvider<FirebaseUser>.value(
@@ -63,7 +63,7 @@ class CheckLogin extends StatelessWidget {
 }
 
 ThemeData appTheme() {
-  final ThemeData theme = prefix0.ThemeData.dark();
+  final ThemeData theme = ThemeData.dark();
 
   return theme.copyWith(
       primaryColor: Colors.black,
