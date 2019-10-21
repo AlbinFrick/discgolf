@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/screens/user.dart';
 import 'package:discgolf/utils/colors.dart';
+import 'package:discgolf/utils/colors.dart' as prefix0;
 import 'package:discgolf/widgets/list_title.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -64,6 +65,7 @@ class FriendAdder extends StatefulWidget {
 
 class _FriendAdderState extends State<FriendAdder> {
   List addedPlayers = List();
+  final TextEditingController _guestController = TextEditingController();
 
   @override
   void initState() {
@@ -96,8 +98,10 @@ class _FriendAdderState extends State<FriendAdder> {
               PlayersList(
                   players: addedPlayers,
                   onRemove: (player, e) {
+                    print(player);
                     setState(() {
-                      widget.friends.insert(player['index'], player);
+                      if (player['guest'] == null)
+                        widget.friends.insert(player['index'], player);
                       addedPlayers.remove(player);
                     });
                   }),
@@ -111,6 +115,69 @@ class _FriendAdderState extends State<FriendAdder> {
                         addedPlayers.add(player);
                       });
                     }),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  child: Column(
+                    children: <Widget>[
+                      ListTitle('Lägg till gäst'),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Row(
+                        children: <Widget>[
+                          Flexible(
+                            child: TextFormField(
+                                cursorColor: accentColor,
+                                controller: _guestController,
+                                //textCapitalization: TextCapitalization.none,
+                                //keyboardType: TextInputType.emailAddress,
+                                decoration: InputDecoration(
+                                    contentPadding: const EdgeInsets.all(15.0),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    labelStyle:
+                                        TextStyle(color: Colors.grey[700]),
+                                    labelText: 'Namn',
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: accentColor),
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderSide: BorderSide(color: mainColor),
+                                    ))),
+                          ),
+                          SizedBox(
+                            width: 5,
+                          ),
+                          RaisedButton(
+                            color: mainColor,
+                            textColor: prefix0.accentColor,
+                            child: Text('Lägg till'),
+                            onPressed: () {
+                              _guestController.text = 'Nisse';
+                              if (_guestController.text.length > 0) {
+                                setState(() {
+                                  addedPlayers.add({
+                                    'email': _guestController.text,
+                                    'index': addedPlayers.length,
+                                    'guest': true
+                                  });
+                                });
+                              }
+                              print(_guestController.text);
+                            },
+                          ),
+                          SizedBox(
+                            width: 70,
+                          )
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -128,7 +195,7 @@ class _FriendAdderState extends State<FriendAdder> {
               addedPlayers.forEach((f) => print(f['email']));
             },
           ),
-        )
+        ),
       ],
     );
   }
