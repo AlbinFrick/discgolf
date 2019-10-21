@@ -22,16 +22,11 @@ class _MyAppState extends State<MapTest> {
 
   final List<PatternItem> dashedPattern = List();
   //add your lat and lng where you wants to draw polyline
-<<<<<<< HEAD
-  
+
   Polyline dashedPolyline;
   int discLandingIndex = 0;
   List<LatLng> playerLatLng = List();
   List<LatLng> dashedLatLng = List();
-=======
-
-  List<LatLng> latlng = List();
->>>>>>> dcaa971160b47373ab330b4381d426cf28aecce0
   LatLng teePosition = LatLng(63.836436, 20.314299);
   LatLng goalPosition = LatLng(63.836826, 20.313357);
   BitmapDescriptor goalIcon;
@@ -53,24 +48,23 @@ class _MyAppState extends State<MapTest> {
         .listen((Position position) {});
     timer =
         Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
-    
-    BitmapDescriptor.fromAssetImage(
-            ImageConfiguration(size: Size(40, 40)), 'assets/images/icon_goal.png')
+
+    BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
+            'assets/images/icon_goal.png')
         .then((onValue) {
       goalIcon = onValue;
       _loadGoalMarker();
     });
-    BitmapDescriptor.fromAssetImage(
-            ImageConfiguration(size: Size(40, 40)), 'assets/images/icon_tee.png')
+    BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
+            'assets/images/icon_tee.png')
         .then((onValue) {
       teeIcon = onValue;
       _loadTeeMarker();
     });
-    BitmapDescriptor.fromAssetImage(
-            ImageConfiguration(size: Size(40, 40)), 'assets/images/icon_disclandingmarker.png')
+    BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
+            'assets/images/icon_disclandingmarker.png')
         .then((onValue) {
       discLandingMarkerIcon = onValue;
-      
     });
 
     dashedPattern.add(PatternItem.dash(20));
@@ -80,7 +74,6 @@ class _MyAppState extends State<MapTest> {
     playerLatLng.add(teePosition);
     dashedLatLng.add(goalPosition);
     _loadDistanceLinesDashed();
-    
   }
 
   @override
@@ -123,7 +116,6 @@ class _MyAppState extends State<MapTest> {
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
-    
   }
 
   @override
@@ -157,7 +149,7 @@ class _MyAppState extends State<MapTest> {
   }
 
   void markDiscLanding() {
-    playerLatLng.add(LatLng(_position.latitude,_position.longitude));
+    playerLatLng.add(LatLng(_position.latitude, _position.longitude));
     setState(() {
       polylines.add(Polyline(
         polylineId: PolylineId("PolyID"),
@@ -176,7 +168,7 @@ class _MyAppState extends State<MapTest> {
         patterns: dashedPattern,
         color: accentColor,
         width: 2,
-      )); 
+      ));
       polylines.add(dashedPolyline);
       discLandingMarkers.add(Marker(
           markerId: MarkerId(discLandingIndex.toString()),
@@ -226,15 +218,14 @@ class _MyAppState extends State<MapTest> {
   void _loadDistanceLinesDashed() {
     dashedLatLng.add(playerLatLng[0]);
     dashedPolyline = (Polyline(
-        polylineId: PolylineId("DistanceDashPoly".toString()),
-        visible: true,
-        //latlng is List<LatLng>
-        points: dashedLatLng,
-        patterns: dashedPattern,
-        color: Colors.orange,
-        width: 2,
-      ));
-      polylines.add(dashedPolyline);
+      polylineId: PolylineId("DistanceDashPoly".toString()),
+      visible: true,
+      //latlng is List<LatLng>
+      points: dashedLatLng,
+      patterns: dashedPattern,
+      color: Colors.orange,
+      width: 2,
+    ));
+    polylines.add(dashedPolyline);
   }
-
 }
