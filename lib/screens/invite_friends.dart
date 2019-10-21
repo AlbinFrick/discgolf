@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:discgolf/screens/playScreen.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:discgolf/utils/colors.dart' as prefix0;
 import 'package:discgolf/widgets/list_title.dart';
@@ -65,9 +64,7 @@ class InviteFriends extends StatelessWidget {
                   CupertinoActivityIndicator()
                 ],
               ),
-            )
-                // color: Colors.black,
-                );
+            ));
           },
         ));
   }
@@ -94,19 +91,8 @@ class _FriendAdderState extends State<FriendAdder> {
     addedPlayers.add(widget.user.data);
   }
 
-  // loadUser(uid) async {
-  //   DocumentSnapshot userSnapshot =
-  //       await Firestore.instance.collection('users').document(uid).get();
-  //   user = userSnapshot.data;
-  //   setState(() {
-  //     addedPlayers.add(user);
-  //   });
-  // }
-
   @override
   Widget build(BuildContext context) {
-    // final String uid = Provider.of<FirebaseUser>(context).uid;
-    // if (user == null) loadUser(uid);
     return Stack(
       children: <Widget>[
         Container(
@@ -136,67 +122,64 @@ class _FriendAdderState extends State<FriendAdder> {
                       });
                     }),
               ),
-              Align(
-                alignment: Alignment.center,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 5),
-                  child: Column(
-                    children: <Widget>[
-                      ListTitle('Lägg till gäst'),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Row(
-                        children: <Widget>[
-                          Flexible(
-                            child: TextFormField(
-                                cursorColor: accentColor,
-                                controller: _guestController,
-                                //textCapitalization: TextCapitalization.none,
-                                //keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                    contentPadding: const EdgeInsets.all(15.0),
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    labelStyle:
-                                        TextStyle(color: Colors.grey[700]),
-                                    labelText: 'Namn',
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide:
-                                          BorderSide(color: accentColor),
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderSide: BorderSide(color: mainColor),
-                                    ))),
-                          ),
-                          SizedBox(
-                            width: 5,
-                          ),
-                          RaisedButton(
-                            color: mainColor,
-                            textColor: prefix0.accentColor,
-                            child: Text('Lägg till'),
-                            onPressed: () {
-                              _guestController.text = 'Nisse';
-                              if (_guestController.text.length > 0) {
-                                setState(() {
-                                  addedPlayers.add({
-                                    'email': _guestController.text,
-                                    'index': addedPlayers.length,
-                                    'guest': true
-                                  });
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 5),
+                child: Column(
+                  children: <Widget>[
+                    ListTitle('Lägg till gäst'),
+                    SizedBox(
+                      height: 5,
+                    ),
+                    Row(
+                      children: <Widget>[
+                        Flexible(
+                          child: TextFormField(
+                              cursorColor: accentColor,
+                              controller: _guestController,
+                              decoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.all(15.0),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  labelStyle:
+                                      TextStyle(color: Colors.grey[700]),
+                                  labelText: 'Namn',
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: accentColor),
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderSide: BorderSide(color: mainColor),
+                                  ))),
+                        ),
+                        SizedBox(
+                          width: 5,
+                        ),
+                        RaisedButton(
+                          color: mainColor,
+                          textColor: prefix0.accentColor,
+                          child: Text('Lägg till'),
+                          onPressed: () {
+                            _guestController.text = 'Nisse';
+                            if (_guestController.text.length > 0) {
+                              setState(() {
+                                addedPlayers.add({
+                                  'email': _guestController.text,
+                                  'index': addedPlayers.length,
+                                  'guest': true
                                 });
-                              }
-                              print(_guestController.text);
-                            },
-                          ),
-                          SizedBox(
-                            width: 70,
-                          )
-                        ],
-                      ),
-                    ],
-                  ),
+                              });
+                            }
+                            print(_guestController.text);
+                          },
+                        ),
+                        SizedBox(
+                          width: 70,
+                        )
+                      ],
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                  ],
                 ),
               ),
             ],
