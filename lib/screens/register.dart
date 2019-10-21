@@ -107,12 +107,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
   register() async {
     try {
       if (_formKey.currentState.validate()) {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        /*FirebaseUser user */await FirebaseAuth.instance.createUserWithEmailAndPassword(
             email: _usernameController.text,
             password: _passwordController.text);
+ //       UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
+   //     userUpdateInfo.displayName = _firstnameController;
+     //   user.updateProfile(userUpdateInfo).then((onValue){
         Navigator.pushReplacementNamed(context, 'home', arguments: {
-          'registered': true,
+          'registered': true, 
         });
+       // Firestore.instance.collection('users').document().setData(
+         //       {'email': _usernameController, 'Förnamn': _firstnameController}).then((onValue) {
+           //   _sheetController.setState(() {
+             //   _loading = false;
+           //   });
+         //   });
       }
     } catch (e) {
       print(e);
