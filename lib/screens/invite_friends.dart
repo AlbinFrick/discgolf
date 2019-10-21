@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:discgolf/screens/user.dart';
+import 'package:discgolf/screens/playScreen.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:discgolf/widgets/list_title.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+DocumentSnapshot userSnapshot;
+
 class InviteFriends extends StatelessWidget {
-  DocumentSnapshot userSnapshot;
   getPlayerFriends(String uid) async {
     userSnapshot =
         await Firestore.instance.collection('users').document(uid).get();
@@ -34,7 +36,13 @@ class InviteFriends extends StatelessWidget {
   Widget build(BuildContext context) {
     final Map args = ModalRoute.of(context).settings.arguments;
     final String uid = Provider.of<FirebaseUser>(context).uid;
-
+    print('invite');
+    // return Scaffold(
+    //   backgroundColor: Colors.red,
+    // );
+    // return Container(
+    //   color: Colors.red,
+    // );
     return Scaffold(
         appBar: AppBar(
           title: Text(args['name']),
@@ -43,9 +51,20 @@ class InviteFriends extends StatelessWidget {
         body: FutureBuilder(
           future: getPlayerFriends(uid),
           builder: (context, snapshot) {
+            print('in builder');
             if (snapshot.connectionState == ConnectionState.done)
-              return FriendAdder(friends: snapshot.data, user: userSnapshot);
+              return FriendAdder(
+                  friends: snapshot.data, user: userSnapshot, args: args);
             return Container(
+                child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text('Laddar vänner...'),
+                  CupertinoActivityIndicator()
+                ],
+              ),
+            )
                 // color: Colors.black,
                 );
           },
@@ -56,7 +75,8 @@ class InviteFriends extends StatelessWidget {
 class FriendAdder extends StatefulWidget {
   final List friends;
   final DocumentSnapshot user;
-  FriendAdder({this.friends, this.user});
+  final Map args;
+  FriendAdder({this.friends, this.user, this.args});
 
   @override
   _FriendAdderState createState() => _FriendAdderState();
@@ -119,15 +139,15 @@ class _FriendAdderState extends State<FriendAdder> {
           right: 10,
           bottom: 10,
           child: FloatingActionButton(
-            backgroundColor: mainColor,
-            child: Icon(
-              Icons.play_arrow,
-              color: accentColor,
-            ),
-            onPressed: () {
-              addedPlayers.forEach((f) => print(f['email']));
-            },
-          ),
+              backgroundColor: mainColor,
+              child: Icon(
+                Icons.play_arrow,
+                color: accentColor,
+              ),
+              onPressed: () {
+                widget.args['players'] = addedPlayers;
+                Navigator.pushNamed(context, 'play', arguments: widget.args);
+              }),
         )
       ],
     );
