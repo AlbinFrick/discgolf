@@ -22,11 +22,16 @@ class _MyAppState extends State<MapTest> {
 
   final List<PatternItem> dashedPattern = List();
   //add your lat and lng where you wants to draw polyline
+<<<<<<< HEAD
   
   Polyline dashedPolyline;
   int discLandingIndex = 0;
   List<LatLng> playerLatLng = List();
   List<LatLng> dashedLatLng = List();
+=======
+
+  List<LatLng> latlng = List();
+>>>>>>> dcaa971160b47373ab330b4381d426cf28aecce0
   LatLng teePosition = LatLng(63.836436, 20.314299);
   LatLng goalPosition = LatLng(63.836826, 20.313357);
   BitmapDescriptor goalIcon;
@@ -45,9 +50,7 @@ class _MyAppState extends State<MapTest> {
     checkPermission();
     StreamSubscription positionStream = _geolocator
         .getPositionStream(locationOptions)
-        .listen((Position position) {
-      
-    });
+        .listen((Position position) {});
     timer =
         Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
     

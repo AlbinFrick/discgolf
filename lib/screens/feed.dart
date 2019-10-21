@@ -23,6 +23,14 @@ class FeedScreen extends StatelessWidget {
                 child: Text('Map'),
               ),
             ),
+            Center(
+              child: RaisedButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, 'play');
+                },
+                child: Text('Play'),
+              ),
+            ),
           ],
         ),
       ),

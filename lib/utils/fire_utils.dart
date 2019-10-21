@@ -74,7 +74,9 @@ class FireUtils {
         .where('email', isEqualTo: friendEmail)
         .getDocuments();
     List friends = await _getUserFriends(uid);
-    bool alreadyFriends = friends.contains(friend.documents[0].documentID);
+    bool alreadyFriends = false;
+    if ((friend.documents.length > 0))
+      alreadyFriends = friends.contains(friend.documents[0].documentID);
     if (friend.documents.length == 0 || alreadyFriends) {
       return false;
     }
