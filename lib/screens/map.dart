@@ -17,6 +17,7 @@ class _MyAppState extends State<MapTest> {
 
   static const LatLng _center = const LatLng(63.836711, 20.313654);
   final Set<Marker> markers = {};
+  Marker playerMarker;
   final Set<Polyline> polylines = {};
   final List<Marker> discLandingMarkers = List();
 
@@ -24,30 +25,38 @@ class _MyAppState extends State<MapTest> {
   //add your lat and lng where you wants to draw polyline
 
   Polyline dashedPolyline;
+  Polyline playerPolyline;
   int discLandingIndex = 0;
   List<LatLng> playerLatLng = List();
   List<LatLng> dashedLatLng = List();
+  LatLng playerPosition = LatLng(63.836436, 20.314299);
   LatLng teePosition = LatLng(63.836436, 20.314299);
-  LatLng goalPosition = LatLng(63.836826, 20.313357);
+  LatLng goalPosition = LatLng(63.836826, 20.314299);
+  LatLng northEast;
+  LatLng southWest;
   BitmapDescriptor goalIcon;
   BitmapDescriptor teeIcon;
   BitmapDescriptor discLandingMarkerIcon;
   Timer timer;
+  String distanceToGoal = "";
 
   @override
   void initState() {
     super.initState();
     _geolocator = Geolocator();
     _position = Position(latitude: 63.836711, longitude: 20.313654);
+
+    playerMarker = Marker(
+        markerId: MarkerId("Player Location"),
+        anchor: const Offset(0.5, 0.5),
+        icon: discLandingMarkerIcon,
+        position: playerPosition);
+    markers.add(playerMarker);
     LocationOptions locationOptions =
         LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 0);
 
     checkPermission();
-    StreamSubscription positionStream = _geolocator
-        .getPositionStream(locationOptions)
-        .listen((Position position) {});
-    timer =
-        Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
+    calculateCameraPosition();
 
     BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
             'assets/images/icon_goal.png')
@@ -85,11 +94,12 @@ class _MyAppState extends State<MapTest> {
   void updateMapLocation() {
     updateLocation();
     mapController.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(_position.latitude, _position.longitude),
-          zoom: 18.0,
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: southWest,
+          northeast: northEast,
         ),
+        32.0,
       ),
     );
   }
@@ -116,33 +126,64 @@ class _MyAppState extends State<MapTest> {
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
+    timer =
+        Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: Text('Maps Sample App'),
-          backgroundColor: Colors.green[700],
+        body: Stack(
+          children: <Widget>[
+            GoogleMap(
+              polylines: polylines,
+              markers: markers,
+              onMapCreated: _onMapCreated,
+              myLocationEnabled: false,
+              initialCameraPosition: CameraPosition(
+                target: LatLng(_position.latitude, _position.longitude),
+                zoom: 18.0,
+              ),
+              mapType: MapType.satellite,
+            ),
+            Positioned(
+                left: 10,
+                top: 10,
+                child: Container(
+                  color: accentColor,
+                  width: 100,
+                  height: 50,
+                  child: Center(
+                    child: Text(
+                      distanceToGoal,
+                      style: TextStyle(fontSize: 30),
+                    ),
+                  ),
+                ))
+          ],
         ),
-        body: GoogleMap(
-          polylines: polylines,
-          markers: markers,
-          onMapCreated: _onMapCreated,
-          myLocationEnabled: true,
-          initialCameraPosition: CameraPosition(
-            target: LatLng(_position.latitude, _position.longitude),
-            zoom: 18.0,
-          ),
-          mapType: MapType.normal,
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            markDiscLanding();
-          },
-          child: Icon(Icons.add, semanticLabel: 'Action'),
-          backgroundColor: Colors.black87,
+        floatingActionButton: Row(
+          children: <Widget>[
+            FloatingActionButton(
+              heroTag: "Mark",
+              onPressed: () {
+                markDiscLanding();
+                updateDistanceToGoal();
+              },
+              child: Icon(Icons.add, semanticLabel: 'Action'),
+              backgroundColor: Colors.black87,
+            ),
+            FloatingActionButton(
+              heroTag: "Remove",
+              onPressed: () {
+                removeDiscLanding();
+                updateDistanceToGoal();
+              },
+              child: Icon(Icons.add, semanticLabel: 'Remove'),
+              backgroundColor: Colors.black87,
+            ),
+          ],
         ),
       ),
     );
@@ -151,13 +192,14 @@ class _MyAppState extends State<MapTest> {
   void markDiscLanding() {
     playerLatLng.add(LatLng(_position.latitude, _position.longitude));
     setState(() {
-      polylines.add(Polyline(
-        polylineId: PolylineId("PolyID"),
+      playerPolyline = Polyline(
+        polylineId: PolylineId("Player Polyline"),
         visible: true,
         points: playerLatLng,
         color: accentColor,
         width: 4,
-      ));
+      );
+      polylines.add(playerPolyline);
       dashedLatLng.removeLast();
       dashedLatLng.add(playerLatLng.last);
       polylines.remove(dashedPolyline);
@@ -181,6 +223,38 @@ class _MyAppState extends State<MapTest> {
     discLandingIndex++;
   }
 
+  void removeDiscLanding() {
+    if (discLandingIndex > 0) {
+      playerLatLng.removeLast();
+      setState(() {
+        polylines.remove(playerPolyline);
+        dashedLatLng.removeLast();
+        dashedLatLng.add(playerLatLng.last);
+        polylines.remove(dashedPolyline);
+        playerPolyline = Polyline(
+          polylineId: PolylineId("Player Polyline"),
+          visible: true,
+          points: playerLatLng,
+          color: accentColor,
+          width: 4,
+        );
+        polylines.add(playerPolyline);
+        dashedPolyline = (Polyline(
+          polylineId: PolylineId("DistanceDashPoly".toString()),
+          visible: true,
+          points: dashedLatLng,
+          patterns: dashedPattern,
+          color: accentColor,
+          width: 2,
+        ));
+        polylines.add(dashedPolyline);
+        markers.remove(discLandingMarkers.last);
+        discLandingMarkers.removeLast();
+      });
+      discLandingIndex--;
+    }
+  }
+
   void _loadTeeMarker() {
     setState(() {
       markers.add(Marker(
@@ -201,6 +275,16 @@ class _MyAppState extends State<MapTest> {
     });
   }
 
+  void updateDistanceToGoal() async {
+    LatLng from = playerLatLng.last;
+    LatLng to = goalPosition;
+    double distanceInMeters = await Geolocator().distanceBetween(
+        from.latitude, from.longitude, to.latitude, to.longitude);
+    setState(() {
+      distanceToGoal = distanceInMeters.toStringAsFixed(0) + "m";
+    });
+  }
+
   void updateLocation() async {
     try {
       Position newPosition = await Geolocator()
@@ -209,6 +293,8 @@ class _MyAppState extends State<MapTest> {
 
       setState(() {
         _position = newPosition;
+        playerPosition = LatLng(newPosition.latitude, newPosition.longitude);
+        updatePlayerMarker(playerPosition);
       });
     } catch (e) {
       print('Error: ${e.toString()}');
@@ -227,5 +313,47 @@ class _MyAppState extends State<MapTest> {
       width: 2,
     ));
     polylines.add(dashedPolyline);
+  }
+
+  void calculateCameraPosition() {
+    // Latitud > 0 är uppåt
+    // Longitud > 0 är höger
+    double deltaLat = teePosition.latitude - goalPosition.latitude;
+    double deltaLon = teePosition.longitude - goalPosition.longitude;
+
+    // Mål är norr om tee
+    if (deltaLat <= 0) {
+      // Mål är höger om tee
+      if (deltaLon <= 0) {
+        southWest = teePosition;
+        northEast = goalPosition;
+        // Mål är vänster om tee
+      } else {
+        southWest = LatLng(teePosition.latitude, goalPosition.longitude);
+        northEast = LatLng(goalPosition.latitude, teePosition.longitude);
+      }
+
+      // Mål är söder om tee
+    } else {
+      // Mål är höger om tee
+      if (deltaLon <= 0) {
+        southWest = LatLng(goalPosition.latitude, teePosition.longitude);
+        northEast = LatLng(teePosition.latitude, goalPosition.longitude);
+        // Mål är vänster om tee
+      } else {
+        southWest = goalPosition;
+        northEast = teePosition;
+      }
+    }
+  }
+
+  void updatePlayerMarker(LatLng position) {
+    markers.remove(playerMarker);
+    playerMarker = Marker(
+        markerId: MarkerId("Player Location"),
+        anchor: const Offset(0.5, 0.5),
+        icon: discLandingMarkerIcon,
+        position: position);
+    markers.add(playerMarker);
   }
 }
