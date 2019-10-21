@@ -117,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'registered': true, 
         });
        // Firestore.instance.collection('users').document().setData(
-         //       {'email': _usernameController, 'Förnamn': _firstnameController}).then((onValue) {
+         //       {'email': _usernameController, 'firstname': _firstnameController}).then((onValue) {
            //   _sheetController.setState(() {
              //   _loading = false;
            //   });
