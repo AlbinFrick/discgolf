@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:discgolf/utils/colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -15,17 +16,22 @@ class _MyAppState extends State<MapTest> {
   Position _position;
 
   static const LatLng _center = const LatLng(63.836711, 20.313654);
-  final Set<Marker> _markers = {};
-  final Set<Marker> distanceMarkers = {};
-  final Set<Polyline> _polyline = {};
+  final Set<Marker> markers = {};
+  final Set<Polyline> polylines = {};
+  final List<Marker> discLandingMarkers = List();
 
+  final List<PatternItem> dashedPattern = List();
   //add your lat and lng where you wants to draw polyline
   
-  List<LatLng> latlng = List();
+  Polyline dashedPolyline;
+  int discLandingIndex = 0;
+  List<LatLng> playerLatLng = List();
+  List<LatLng> dashedLatLng = List();
   LatLng teePosition = LatLng(63.836436, 20.314299);
   LatLng goalPosition = LatLng(63.836826, 20.313357);
   BitmapDescriptor goalIcon;
   BitmapDescriptor teeIcon;
+  BitmapDescriptor discLandingMarkerIcon;
   Timer timer;
 
   @override
@@ -44,21 +50,34 @@ class _MyAppState extends State<MapTest> {
     });
     timer =
         Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
-
-    latlng.add(teePosition);
     
     BitmapDescriptor.fromAssetImage(
-            ImageConfiguration(size: Size(2, 2)), 'assets/images/icon_goal.png')
+            ImageConfiguration(size: Size(40, 40)), 'assets/images/icon_goal.png')
         .then((onValue) {
       goalIcon = onValue;
       _loadGoalMarker();
     });
     BitmapDescriptor.fromAssetImage(
-            ImageConfiguration(size: Size(2, 2)), 'assets/images/icon_tee.png')
+            ImageConfiguration(size: Size(40, 40)), 'assets/images/icon_tee.png')
         .then((onValue) {
       teeIcon = onValue;
       _loadTeeMarker();
     });
+    BitmapDescriptor.fromAssetImage(
+            ImageConfiguration(size: Size(40, 40)), 'assets/images/icon_disclandingmarker.png')
+        .then((onValue) {
+      discLandingMarkerIcon = onValue;
+      
+    });
+
+    dashedPattern.add(PatternItem.dash(20));
+    dashedPattern.add(PatternItem.gap(20));
+
+    // Adding tee to first player position.
+    playerLatLng.add(teePosition);
+    dashedLatLng.add(goalPosition);
+    _loadDistanceLinesDashed();
+    
   }
 
   @override
@@ -73,7 +92,7 @@ class _MyAppState extends State<MapTest> {
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(_position.latitude, _position.longitude),
-          zoom: 17.0,
+          zoom: 18.0,
         ),
       ),
     );
@@ -101,6 +120,7 @@ class _MyAppState extends State<MapTest> {
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
+    
   }
 
   @override
@@ -112,19 +132,19 @@ class _MyAppState extends State<MapTest> {
           backgroundColor: Colors.green[700],
         ),
         body: GoogleMap(
-          polylines: _polyline,
-          markers: _markers,
+          polylines: polylines,
+          markers: markers,
           onMapCreated: _onMapCreated,
           myLocationEnabled: true,
           initialCameraPosition: CameraPosition(
             target: LatLng(_position.latitude, _position.longitude),
-            zoom: 17.0,
+            zoom: 18.0,
           ),
           mapType: MapType.normal,
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            _onAddMarkerButtonPressed();
+            markDiscLanding();
           },
           child: Icon(Icons.add, semanticLabel: 'Action'),
           backgroundColor: Colors.black87,
@@ -133,23 +153,42 @@ class _MyAppState extends State<MapTest> {
     );
   }
 
-  void _onAddMarkerButtonPressed() {
-    latlng.add(LatLng(_position.latitude,_position.longitude));
+  void markDiscLanding() {
+    playerLatLng.add(LatLng(_position.latitude,_position.longitude));
     setState(() {
-      _polyline.add(Polyline(
-        polylineId: PolylineId(_position.toString()),
+      polylines.add(Polyline(
+        polylineId: PolylineId("PolyID"),
         visible: true,
-        //latlng is List<LatLng>
-        points: latlng,
-        color: Colors.blue,
-        width: 2,
+        points: playerLatLng,
+        color: accentColor,
+        width: 4,
       ));
+      dashedLatLng.removeLast();
+      dashedLatLng.add(playerLatLng.last);
+      polylines.remove(dashedPolyline);
+      dashedPolyline = (Polyline(
+        polylineId: PolylineId("DistanceDashPoly".toString()),
+        visible: true,
+        points: dashedLatLng,
+        patterns: dashedPattern,
+        color: accentColor,
+        width: 2,
+      )); 
+      polylines.add(dashedPolyline);
+      discLandingMarkers.add(Marker(
+          markerId: MarkerId(discLandingIndex.toString()),
+          infoWindow: InfoWindow(title: "Kast"),
+          anchor: const Offset(0.5, 0.5),
+          icon: discLandingMarkerIcon,
+          position: playerLatLng.last));
+      markers.add(discLandingMarkers.last);
     });
+    discLandingIndex++;
   }
 
   void _loadTeeMarker() {
     setState(() {
-      _markers.add(Marker(
+      markers.add(Marker(
           markerId: MarkerId("tee"),
           infoWindow: InfoWindow(title: "Utslagsplats", snippet: 'Hål 3'),
           icon: teeIcon,
@@ -159,7 +198,7 @@ class _MyAppState extends State<MapTest> {
 
   void _loadGoalMarker() {
     setState(() {
-      _markers.add(Marker(
+      markers.add(Marker(
           markerId: MarkerId("goal"),
           infoWindow: InfoWindow(title: "Mål", snippet: 'Hål 3'),
           icon: goalIcon,
@@ -180,4 +219,19 @@ class _MyAppState extends State<MapTest> {
       print('Error: ${e.toString()}');
     }
   }
+
+  void _loadDistanceLinesDashed() {
+    dashedLatLng.add(playerLatLng[0]);
+    dashedPolyline = (Polyline(
+        polylineId: PolylineId("DistanceDashPoly".toString()),
+        visible: true,
+        //latlng is List<LatLng>
+        points: dashedLatLng,
+        patterns: dashedPattern,
+        color: Colors.orange,
+        width: 2,
+      ));
+      polylines.add(dashedPolyline);
+  }
+
 }
