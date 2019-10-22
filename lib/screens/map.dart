@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:discgolf/utils/colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
@@ -15,12 +16,20 @@ class _MyAppState extends State<MapTest> {
   Geolocator _geolocator;
   Position _position;
 
+  //Temp
+  final margin = const EdgeInsets.only(bottom: 10.0, right: 10.0, left: 10.0);
+  final backColor = Colors.lightGreen;
+  final text = new Text(
+    'Text here',
+    style: new TextStyle(fontSize: 50.0),
+  );
+
   static const LatLng _center = const LatLng(63.836711, 20.313654);
   final Set<Marker> markers = {};
   Marker playerMarker;
   final Set<Polyline> polylines = {};
   final List<Marker> discLandingMarkers = List();
-
+  final List<String> throwLengths = List();
   final List<PatternItem> dashedPattern = List();
   //add your lat and lng where you wants to draw polyline
 
@@ -39,6 +48,7 @@ class _MyAppState extends State<MapTest> {
   BitmapDescriptor discLandingMarkerIcon;
   Timer timer;
   String distanceToGoal = "";
+  bool throwsVisible = false;
 
   @override
   void initState() {
@@ -126,70 +136,130 @@ class _MyAppState extends State<MapTest> {
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
-    timer =
-        Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
+    //timer =
+    //    Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Stack(
-          children: <Widget>[
-            GoogleMap(
-              polylines: polylines,
-              markers: markers,
-              onMapCreated: _onMapCreated,
-              myLocationEnabled: false,
-              initialCameraPosition: CameraPosition(
-                target: LatLng(_position.latitude, _position.longitude),
-                zoom: 18.0,
-              ),
-              mapType: MapType.satellite,
+    var width = MediaQuery.of(context).size.width;
+
+    return new Scaffold(
+      body: Stack(
+        children: [
+          GoogleMap(
+            polylines: polylines,
+            markers: markers,
+            onMapCreated: _onMapCreated,
+            myLocationEnabled: false,
+            initialCameraPosition: CameraPosition(
+              target: LatLng(_position.latitude, _position.longitude),
+              zoom: 18.0,
             ),
-            Positioned(
-                left: 10,
-                top: 10,
-                child: Container(
-                  color: accentColor,
-                  width: 100,
-                  height: 50,
-                  child: Center(
-                    child: Text(
-                      distanceToGoal,
-                      style: TextStyle(fontSize: 30),
+          ),
+          Positioned(
+            bottom: 0,
+            child: Container(
+              width: width,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  ButtonTheme(
+                    minWidth: 60.0,
+                    height: 40.0,
+                    buttonColor: accentColor,
+                    child: RaisedButton(
+                      onPressed: () { toggleThrowsList(); },
+                      child: Text("Kast"),
                     ),
                   ),
-                ))
-          ],
-        ),
-        floatingActionButton: Row(
-          children: <Widget>[
-            FloatingActionButton(
-              heroTag: "Mark",
-              onPressed: () {
-                markDiscLanding();
-                updateDistanceToGoal();
-              },
-              child: Icon(Icons.add, semanticLabel: 'Action'),
-              backgroundColor: Colors.black87,
+                  IconButton(
+                      iconSize: 60,
+                      padding: const EdgeInsets.all(2),
+                      icon: Image.asset(
+                          "assets/images/button_removelanding.png",
+                          height: 80,
+                          width: 80),
+                      onPressed: () {
+                        removeDiscLanding();
+                      }),
+                  IconButton(
+                      iconSize: 80,
+                      padding: const EdgeInsets.all(2),
+                      icon: Image.asset("assets/images/button_marklanding.png",
+                          height: 100, width: 100),
+                      onPressed: () {
+                        markDiscLanding();
+                      }),
+                  IconButton(
+                      iconSize: 60,
+                      padding: const EdgeInsets.all(2),
+                      icon: Image.asset("assets/images/button_markgoal.png",
+                          height: 80, width: 80),
+                      onPressed: () {
+                        // markGoal
+                      }),
+                  Container(
+                    height: 40,
+                    width: 60,
+                    color: accentColor,
+                    child: Center(
+                      child: Text(
+                        "190m",
+                        style:
+                            TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            FloatingActionButton(
-              heroTag: "Remove",
-              onPressed: () {
-                removeDiscLanding();
-                updateDistanceToGoal();
-              },
-              child: Icon(Icons.add, semanticLabel: 'Remove'),
-              backgroundColor: Colors.black87,
+          ),
+          Positioned(
+            left: 0,
+            bottom: 100,
+            child: Visibility(
+              visible: throwsVisible,
+              child: Container(
+                width: 100,
+                height: 4000,
+                child: ListView.separated(
+                    reverse: true,
+                    padding: const EdgeInsets.all(8),
+                    itemCount: throwLengths.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Container(
+                        height: 30,
+                        padding: const EdgeInsets.all(4),
+                        color: accentColor,
+                        child: Text(
+                          '${index + 1}: ${throwLengths[index]}m',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      );
+                    },
+                    separatorBuilder: (BuildContext context, int index) =>
+                        const Divider(
+                          height: 5,
+                          thickness: 2,
+                        )),
+              ),
             ),
-          ],
-        ),
+          )
+        ],
       ),
     );
   }
 
+  void toggleThrowsList() {
+    setState(() {
+      throwsVisible = !throwsVisible;
+    });
+  }
+
   void markDiscLanding() {
+    LatLng origin = playerLatLng.last;
     playerLatLng.add(LatLng(_position.latitude, _position.longitude));
     setState(() {
       playerPolyline = Polyline(
@@ -220,7 +290,14 @@ class _MyAppState extends State<MapTest> {
           position: playerLatLng.last));
       markers.add(discLandingMarkers.last);
     });
+    loadThrowDistance(origin, playerLatLng.last);
     discLandingIndex++;
+  }
+
+  void loadThrowDistance(LatLng from, LatLng to) async {
+    double distanceInMeters = await Geolocator().distanceBetween(
+        from.latitude, from.longitude, to.latitude, to.longitude);
+    throwLengths.add(distanceInMeters.toStringAsFixed(0));
   }
 
   void removeDiscLanding() {
@@ -253,6 +330,7 @@ class _MyAppState extends State<MapTest> {
       });
       discLandingIndex--;
     }
+    throwLengths.removeLast();
   }
 
   void _loadTeeMarker() {
