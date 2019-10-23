@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 DocumentSnapshot userSnapshot;
 Future friends;
@@ -138,6 +139,9 @@ class _FriendAdderState extends State<FriendAdder> {
                           child: TextFormField(
                               cursorColor: accentColor,
                               controller: _guestController,
+                              onFieldSubmitted: (input) {
+                                addGuest();
+                              },
                               decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.all(15.0),
                                   filled: true,
@@ -160,6 +164,7 @@ class _FriendAdderState extends State<FriendAdder> {
                           textColor: prefix0.accentColor,
                           child: Text('Lägg till'),
                           onPressed: () {
+<<<<<<< HEAD
                             if (_guestController.text.length > 0) {
                               setState(() {
                                 addedPlayers.add({
@@ -169,6 +174,10 @@ class _FriendAdderState extends State<FriendAdder> {
                                 });
                               });
                             }
+=======
+                            addGuest();
+                            FocusScope.of(context).requestFocus(FocusNode());
+>>>>>>> e217d3f5adbc13220da50eb2a87e1681b2ad3bb5
                           },
                         ),
                         SizedBox(
@@ -201,6 +210,19 @@ class _FriendAdderState extends State<FriendAdder> {
         )
       ],
     );
+  }
+
+  void addGuest() {
+    if (_guestController.text.length > 0) {
+      setState(() {
+        addedPlayers.add({
+          'email': _guestController.text,
+          'index': addedPlayers.length,
+          'guest': true
+        });
+      });
+      _guestController.text = '';
+    }
   }
 }
 
