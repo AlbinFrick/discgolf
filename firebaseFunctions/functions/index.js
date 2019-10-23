@@ -1,30 +1,30 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
 admin.initializeApp();
 
 exports.updateUserCount = functions.auth.user().onCreate(user => {
-    var db = admin.firestore();
-    var collection = db.collection("users");
-    console.log("Adding new user " + user.email + "...");
+	var db = admin.firestore();
+	var collection = db.collection('users');
+	console.log('Adding new user ' + user.email + '...');
 
-    collection
-        .doc(user.uid)
-        .set({
-            email: user.email,
-            friends: [],
-            firstName: user.firstName,
-            lastName: user.lastName,
-            friend_requests: []
-        })
-        .then(() => {
-            console.log("Added new user");
-            return;
-        })
-        .catch(e => {
-            console.log("Error:");
-            console.log(e);
-            return;
-        });
+	collection
+		.doc(user.uid)
+		.set({
+			email: user.email,
+			friends: [],
+			firstName: user.firstName,
+			lastName: user.lastName,
+			friend_requests: []
+		})
+		.then(() => {
+			console.log('Added new user');
+			return;
+		})
+		.catch(e => {
+			console.log('Error:');
+			console.log(e);
+			return;
+		});
 });
 //Do what you need to do
 // // Create and Deploy Your First Cloud Functions

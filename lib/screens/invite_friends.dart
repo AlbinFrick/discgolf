@@ -8,8 +8,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 DocumentSnapshot userSnapshot;
+Future friends;
+var friendsData;
 
-class InviteFriends extends StatelessWidget {
+class InviteFriends extends StatefulWidget {
+  @override
+  _InviteFriendsState createState() => _InviteFriendsState();
+}
+
+class _InviteFriendsState extends State<InviteFriends> {
   getPlayerFriends(String uid) async {
     userSnapshot =
         await Firestore.instance.collection('users').document(uid).get();
@@ -34,8 +41,17 @@ class InviteFriends extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map args = ModalRoute.of(context).settings.arguments;
     final String uid = Provider.of<FirebaseUser>(context).uid;
+    if (friendsData == null) {
+      print('inne');
+      friends = getPlayerFriends(uid);
+      friends.then((data) => {
+            setState(() {
+              friendsData = data;
+            })
+          });
+    }
+    final Map args = ModalRoute.of(context).settings.arguments;
     print('invite');
     // return Scaffold(
     //   backgroundColor: Colors.red,
@@ -44,19 +60,13 @@ class InviteFriends extends StatelessWidget {
     //   color: Colors.red,
     // );
     return Scaffold(
-        appBar: AppBar(
-          title: Text(args['name']),
-          backgroundColor: mainColor,
-        ),
-        body: FutureBuilder(
-          future: getPlayerFriends(uid),
-          builder: (context, snapshot) {
-            print('in builder');
-            if (snapshot.connectionState == ConnectionState.done)
-              return FriendAdder(
-                  friends: snapshot.data, user: userSnapshot, args: args);
-            return Container(
-                child: Center(
+      appBar: AppBar(
+        title: Text(args['name']),
+        backgroundColor: mainColor,
+      ),
+      body: friendsData == null
+          ? Container(
+              child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -64,9 +74,28 @@ class InviteFriends extends StatelessWidget {
                   CupertinoActivityIndicator()
                 ],
               ),
-            ));
-          },
-        ));
+            ))
+          : FriendAdder(friends: friendsData, user: userSnapshot, args: args),
+      // body: FutureBuilder(
+      //   future: getPlayerFriends(uid),
+      //   builder: (context, snapshot) {
+      //     print('in builder');
+      //     if (snapshot.connectionState == ConnectionState.done)
+      //       return FriendAdder(
+      //           friends: snapshot.data, user: userSnapshot, args: args);
+      //     return Container(
+      //         child: Center(
+      //       child: Column(
+      //         mainAxisAlignment: MainAxisAlignment.center,
+      //         children: <Widget>[
+      //           Text('Laddar vänner...'),
+      //           CupertinoActivityIndicator()
+      //         ],
+      //       ),
+      //     ));
+      //   },
+      // )
+    );
   }
 }
 
@@ -158,7 +187,6 @@ class _FriendAdderState extends State<FriendAdder> {
                           textColor: prefix0.accentColor,
                           child: Text('Lägg till'),
                           onPressed: () {
-                            _guestController.text = 'Nisse';
                             if (_guestController.text.length > 0) {
                               setState(() {
                                 addedPlayers.add({
