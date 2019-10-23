@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 DocumentSnapshot userSnapshot;
 Future friends;
@@ -165,6 +166,9 @@ class _FriendAdderState extends State<FriendAdder> {
                           child: TextFormField(
                               cursorColor: accentColor,
                               controller: _guestController,
+                              onFieldSubmitted: (input) {
+                                addGuest();
+                              },
                               decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.all(15.0),
                                   filled: true,
@@ -187,16 +191,8 @@ class _FriendAdderState extends State<FriendAdder> {
                           textColor: prefix0.accentColor,
                           child: Text('Lägg till'),
                           onPressed: () {
-                            if (_guestController.text.length > 0) {
-                              setState(() {
-                                addedPlayers.add({
-                                  'email': _guestController.text,
-                                  'index': addedPlayers.length,
-                                  'guest': true
-                                });
-                              });
-                            }
-                            print(_guestController.text);
+                            addGuest();
+                            FocusScope.of(context).requestFocus(FocusNode());
                           },
                         ),
                         SizedBox(
@@ -229,6 +225,19 @@ class _FriendAdderState extends State<FriendAdder> {
         )
       ],
     );
+  }
+
+  void addGuest() {
+    if (_guestController.text.length > 0) {
+      setState(() {
+        addedPlayers.add({
+          'email': _guestController.text,
+          'index': addedPlayers.length,
+          'guest': true
+        });
+      });
+      _guestController.text = '';
+    }
   }
 }
 
