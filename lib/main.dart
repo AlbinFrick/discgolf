@@ -6,6 +6,7 @@ import 'package:discgolf/screens/playScreen.dart';
 import 'package:discgolf/screens/register.dart';
 import 'package:discgolf/screens/signin.dart';
 import 'package:discgolf/screens/user.dart';
+import 'package:discgolf/screens/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +22,8 @@ class Main extends StatelessWidget {
     'mapTest': (context) => MapTest(),
     'inviteFriends': (context) => InviteFriends(),
     'user': (context) => UserScreen(),
-    'course': (context) => CourseScreen()
+    'course': (context) => CourseScreen(),
+    'profile': (context) => Profile(),
   };
   @override
   Widget build(BuildContext context) {

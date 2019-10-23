@@ -8,15 +8,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 DocumentSnapshot userSnapshot;
+Future friends;
+var friendsData;
 
-class InviteFriends extends StatelessWidget {
+class InviteFriends extends StatefulWidget {
+  @override
+  _InviteFriendsState createState() => _InviteFriendsState();
+}
+
+class _InviteFriendsState extends State<InviteFriends> {
   getPlayerFriends(String uid) async {
     userSnapshot =
         await Firestore.instance.collection('users').document(uid).get();
     List<String> friendIDs = List<String>.from(userSnapshot.data['friends']);
     List<Map<String, dynamic>> friends = List();
     friends = await getFriends(friendIDs, friends);
-    print('friends done loading');
     return friends;
   }
 
@@ -27,6 +33,7 @@ class InviteFriends extends StatelessWidget {
           .document(friendIDs[i])
           .get();
       user.data['index'] = i;
+      user.data['id'] = friendIDs[i];
       friends.add(user.data);
     }
     return friends;
@@ -34,29 +41,25 @@ class InviteFriends extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Map args = ModalRoute.of(context).settings.arguments;
     final String uid = Provider.of<FirebaseUser>(context).uid;
-    print('invite');
-    // return Scaffold(
-    //   backgroundColor: Colors.red,
-    // );
-    // return Container(
-    //   color: Colors.red,
-    // );
+    if (friendsData == null) {
+      friends = getPlayerFriends(uid);
+      friends.then((data) {
+        setState(() {
+          friendsData = data;
+        });
+      });
+    }
+    final Map args = ModalRoute.of(context).settings.arguments;
+
     return Scaffold(
-        appBar: AppBar(
-          title: Text(args['name']),
-          backgroundColor: mainColor,
-        ),
-        body: FutureBuilder(
-          future: getPlayerFriends(uid),
-          builder: (context, snapshot) {
-            print('in builder');
-            if (snapshot.connectionState == ConnectionState.done)
-              return FriendAdder(
-                  friends: snapshot.data, user: userSnapshot, args: args);
-            return Container(
-                child: Center(
+      appBar: AppBar(
+        title: Text(args['name']),
+        backgroundColor: mainColor,
+      ),
+      body: friendsData == null
+          ? Container(
+              child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
@@ -64,9 +67,9 @@ class InviteFriends extends StatelessWidget {
                   CupertinoActivityIndicator()
                 ],
               ),
-            ));
-          },
-        ));
+            ))
+          : FriendAdder(friends: friendsData, user: userSnapshot, args: args),
+    );
   }
 }
 
@@ -104,7 +107,6 @@ class _FriendAdderState extends State<FriendAdder> {
               PlayersList(
                   players: addedPlayers,
                   onRemove: (player, e) {
-                    print(player);
                     setState(() {
                       if (player['guest'] == null)
                         widget.friends.insert(player['index'], player);
@@ -136,6 +138,9 @@ class _FriendAdderState extends State<FriendAdder> {
                           child: TextFormField(
                               cursorColor: accentColor,
                               controller: _guestController,
+                              onFieldSubmitted: (input) {
+                                addGuest();
+                              },
                               decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.all(15.0),
                                   filled: true,
@@ -158,17 +163,8 @@ class _FriendAdderState extends State<FriendAdder> {
                           textColor: prefix0.accentColor,
                           child: Text('Lägg till'),
                           onPressed: () {
-                            _guestController.text = 'Nisse';
-                            if (_guestController.text.length > 0) {
-                              setState(() {
-                                addedPlayers.add({
-                                  'email': _guestController.text,
-                                  'index': addedPlayers.length,
-                                  'guest': true
-                                });
-                              });
-                            }
-                            print(_guestController.text);
+                            addGuest();
+                            FocusScope.of(context).requestFocus(FocusNode());
                           },
                         ),
                         SizedBox(
@@ -201,6 +197,19 @@ class _FriendAdderState extends State<FriendAdder> {
         )
       ],
     );
+  }
+
+  void addGuest() {
+    if (_guestController.text.length > 0) {
+      setState(() {
+        addedPlayers.add({
+          'email': _guestController.text,
+          'index': addedPlayers.length,
+          'guest': true
+        });
+      });
+      _guestController.text = '';
+    }
   }
 }
 
@@ -247,12 +256,13 @@ class FriendList extends StatelessWidget {
       itemCount: friends.length,
       itemBuilder: (context, index) {
         var friend = friends[index];
-        if (friend != null)
+        if (friend != null) {
           return FriendCard(
               friend: friends[index],
               onAdd: onAddList,
               index: index,
               friendList: true);
+        }
         return Container();
       },
     ));
