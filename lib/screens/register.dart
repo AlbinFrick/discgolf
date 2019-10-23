@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/screens/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -103,25 +104,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
               OutlineInputBorder(borderSide: BorderSide(color: Colors.black))),
     );
   }
-
+  Function setNames = (var data){
+    print("-----------");
+    print("-----------");
+    print("-----------");
+    print("-----------");
+    print(data);
+    print("-----------");
+    print("-----------");
+    print("-----------");
+    //Firestore.instance.collection('users').document(user.uid)
+   // Map data = {firstname: _firstnamecontroller.text,
+   // lastname: _lastnamecontroller.text};
+  };
   register() async {
     try {
       if (_formKey.currentState.validate()) {
-        /*FirebaseUser user */await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
             email: _usernameController.text,
             password: _passwordController.text);
- //       UserUpdateInfo userUpdateInfo = new UserUpdateInfo();
-   //     userUpdateInfo.displayName = _firstnameController;
-     //   user.updateProfile(userUpdateInfo).then((onValue){
         Navigator.pushReplacementNamed(context, 'home', arguments: {
           'registered': true, 
-        });
-       // Firestore.instance.collection('users').document().setData(
-         //       {'email': _usernameController, 'firstname': _firstnameController}).then((onValue) {
-           //   _sheetController.setState(() {
-             //   _loading = false;
-           //   });
-         //   });
+        }).then(setNames);      
       }
     } catch (e) {
       print(e);
@@ -129,4 +133,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _formKey.currentState.validate();
     }
   }
-}
+ }
