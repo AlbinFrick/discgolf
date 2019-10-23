@@ -54,6 +54,7 @@ class _MyAppState extends State<MapTest> {
   void initState() {
     super.initState();
     _geolocator = Geolocator();
+    checkPermission();
     _position = Position(latitude: 63.836711, longitude: 20.313654);
 
     playerMarker = Marker(
@@ -64,8 +65,14 @@ class _MyAppState extends State<MapTest> {
     markers.add(playerMarker);
     LocationOptions locationOptions =
         LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 0);
+    StreamSubscription<Position> positionStream = _geolocator
+        .getPositionStream(locationOptions)
+        .listen((Position position) {
+      playerPosition = LatLng(position.latitude, position.longitude);
+      updatePlayerMarker(playerPosition);
+    });
 
-    checkPermission();
+    
     calculateCameraPosition();
 
     BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
@@ -101,19 +108,6 @@ class _MyAppState extends State<MapTest> {
     super.dispose();
   }
 
-  void updateMapLocation() {
-    updateLocation();
-    mapController.animateCamera(
-      CameraUpdate.newLatLngBounds(
-        LatLngBounds(
-          southwest: southWest,
-          northeast: northEast,
-        ),
-        32.0,
-      ),
-    );
-  }
-
   void checkPermission() {
     _geolocator.checkGeolocationPermissionStatus().then((status) {
       print('status: $status');
@@ -136,8 +130,15 @@ class _MyAppState extends State<MapTest> {
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
-    //timer =
-    //    Timer.periodic(Duration(seconds: 2), (Timer t) => updateMapLocation());
+    mapController.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: southWest,
+          northeast: northEast,
+        ),
+        32.0,
+      ),
+    );
   }
 
   @override
@@ -152,6 +153,7 @@ class _MyAppState extends State<MapTest> {
             markers: markers,
             onMapCreated: _onMapCreated,
             myLocationEnabled: false,
+            mapType: MapType.satellite,
             initialCameraPosition: CameraPosition(
               target: LatLng(_position.latitude, _position.longitude),
               zoom: 18.0,
@@ -169,7 +171,9 @@ class _MyAppState extends State<MapTest> {
                     height: 40.0,
                     buttonColor: accentColor,
                     child: RaisedButton(
-                      onPressed: () { toggleThrowsList(); },
+                      onPressed: () {
+                        toggleThrowsList();
+                      },
                       child: Text("Kast"),
                     ),
                   ),
@@ -206,8 +210,8 @@ class _MyAppState extends State<MapTest> {
                     child: Center(
                       child: Text(
                         "190m",
-                        style:
-                            TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -260,7 +264,7 @@ class _MyAppState extends State<MapTest> {
 
   void markDiscLanding() {
     LatLng origin = playerLatLng.last;
-    playerLatLng.add(LatLng(_position.latitude, _position.longitude));
+    playerLatLng.add(LatLng(playerPosition.latitude, playerPosition.longitude));
     setState(() {
       playerPolyline = Polyline(
         polylineId: PolylineId("Player Polyline"),
@@ -371,8 +375,6 @@ class _MyAppState extends State<MapTest> {
 
       setState(() {
         _position = newPosition;
-        playerPosition = LatLng(newPosition.latitude, newPosition.longitude);
-        updatePlayerMarker(playerPosition);
       });
     } catch (e) {
       print('Error: ${e.toString()}');
@@ -423,15 +425,20 @@ class _MyAppState extends State<MapTest> {
         northEast = teePosition;
       }
     }
+
+    southWest = LatLng(southWest.latitude - (10 / 111111), southWest.longitude);
   }
 
   void updatePlayerMarker(LatLng position) {
-    markers.remove(playerMarker);
-    playerMarker = Marker(
-        markerId: MarkerId("Player Location"),
-        anchor: const Offset(0.5, 0.5),
-        icon: discLandingMarkerIcon,
-        position: position);
-    markers.add(playerMarker);
+    setState(() {
+      markers.remove(playerMarker);
+      playerMarker = Marker(
+          markerId: MarkerId("Player Location"),
+          anchor: const Offset(0.5, 0.5),
+          icon: discLandingMarkerIcon,
+          position: position);
+
+      markers.add(playerMarker);
+    });
   }
 }
