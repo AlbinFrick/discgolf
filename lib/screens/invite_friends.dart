@@ -23,7 +23,6 @@ class _InviteFriendsState extends State<InviteFriends> {
     List<String> friendIDs = List<String>.from(userSnapshot.data['friends']);
     List<Map<String, dynamic>> friends = List();
     friends = await getFriends(friendIDs, friends);
-    print('friends done loading');
     return friends;
   }
 
@@ -34,6 +33,7 @@ class _InviteFriendsState extends State<InviteFriends> {
           .document(friendIDs[i])
           .get();
       user.data['index'] = i;
+      user.data['id'] = friendIDs[i];
       friends.add(user.data);
     }
     return friends;
@@ -43,22 +43,15 @@ class _InviteFriendsState extends State<InviteFriends> {
   Widget build(BuildContext context) {
     final String uid = Provider.of<FirebaseUser>(context).uid;
     if (friendsData == null) {
-      print('inne');
       friends = getPlayerFriends(uid);
-      friends.then((data) => {
-            setState(() {
-              friendsData = data;
-            })
-          });
+      friends.then((data) {
+        setState(() {
+          friendsData = data;
+        });
+      });
     }
     final Map args = ModalRoute.of(context).settings.arguments;
-    print('invite');
-    // return Scaffold(
-    //   backgroundColor: Colors.red,
-    // );
-    // return Container(
-    //   color: Colors.red,
-    // );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(args['name']),
@@ -76,25 +69,6 @@ class _InviteFriendsState extends State<InviteFriends> {
               ),
             ))
           : FriendAdder(friends: friendsData, user: userSnapshot, args: args),
-      // body: FutureBuilder(
-      //   future: getPlayerFriends(uid),
-      //   builder: (context, snapshot) {
-      //     print('in builder');
-      //     if (snapshot.connectionState == ConnectionState.done)
-      //       return FriendAdder(
-      //           friends: snapshot.data, user: userSnapshot, args: args);
-      //     return Container(
-      //         child: Center(
-      //       child: Column(
-      //         mainAxisAlignment: MainAxisAlignment.center,
-      //         children: <Widget>[
-      //           Text('Laddar vänner...'),
-      //           CupertinoActivityIndicator()
-      //         ],
-      //       ),
-      //     ));
-      //   },
-      // )
     );
   }
 }
@@ -133,7 +107,6 @@ class _FriendAdderState extends State<FriendAdder> {
               PlayersList(
                   players: addedPlayers,
                   onRemove: (player, e) {
-                    print(player);
                     setState(() {
                       if (player['guest'] == null)
                         widget.friends.insert(player['index'], player);
@@ -196,7 +169,6 @@ class _FriendAdderState extends State<FriendAdder> {
                                 });
                               });
                             }
-                            print(_guestController.text);
                           },
                         ),
                         SizedBox(
@@ -275,12 +247,13 @@ class FriendList extends StatelessWidget {
       itemCount: friends.length,
       itemBuilder: (context, index) {
         var friend = friends[index];
-        if (friend != null)
+        if (friend != null) {
           return FriendCard(
               friend: friends[index],
               onAdd: onAddList,
               index: index,
               friendList: true);
+        }
         return Container();
       },
     ));

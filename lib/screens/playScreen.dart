@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/utils/colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 Map arguments;
-var game;
+String game;
+int currentHole;
 
 class PlayScreen extends StatefulWidget {
   @override
@@ -14,23 +17,48 @@ class _PlayScreenState extends State<PlayScreen> {
   @override
   void initState() {
     super.initState();
+    currentHole = 1;
   }
 
-  setGame(args) {
-    print('setting games');
-    print(args['track']);
+  setGame(Map args, String uid) {
     if (game == null) {
-      //  Firestore.instance.collection('games').add({
-      // 'courseID': args[]
-      // });
+      game = '';
+
+      List playerList = List();
+      Map holes = Map();
+      print(args['holes']);
+      args['holes'].forEach((hole) {
+        holes[hole['number'].toString()] = {
+          'throws': hole['par'],
+          'locations': []
+        };
+      });
+      print(holes);
+      args['players'].forEach((player) {
+        String playerID = player['id'];
+        if (playerID == null)
+          playerList.add({uid: holes});
+        else
+          playerList.add({player['id']: holes});
+      });
+      Firestore.instance
+          .collection('testgames')
+          .add({'players': playerList}).then((docRef) {
+        setState(() {
+          game = docRef.documentID;
+        });
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final String uid = Provider.of<FirebaseUser>(context).uid;
+
     final Map args = ModalRoute.of(context).settings.arguments;
     if (arguments == null) arguments = args;
-    setGame(args);
+    setGame(args, uid);
+
     return Scaffold(
         appBar: AppBar(
           backgroundColor: mainColor,
@@ -41,6 +69,10 @@ class _PlayScreenState extends State<PlayScreen> {
               height: 10,
             ),
             HoleList(args: args),
+            SizedBox(
+              height: 10,
+            ),
+            NavButtons()
           ],
         ));
   }
@@ -56,6 +88,9 @@ class HoleList extends StatelessWidget {
     return Container(
       height: MediaQuery.of(context).size.height / 4 * 3,
       child: PageView.builder(
+        onPageChanged: (int) {
+          currentHole = int;
+        },
         controller: PageController(viewportFraction: 0.95),
         scrollDirection: Axis.horizontal,
         itemCount: args['holes'].length,
@@ -134,11 +169,55 @@ class _HoleCardState extends State<HoleCard> {
   }
 }
 
+class NavButtons extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    Function goToMap = () {
+      print(arguments['holes'][currentHole]);
+      Navigator.pushNamed(context, 'mapTest',
+          arguments: {'hole': arguments['holes'][currentHole], 'gameid': game});
+    };
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 15),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          getNavButton(title: 'Karta', onPress: goToMap),
+          SizedBox(
+            width: 20,
+          ),
+          getNavButton(title: 'Översikt'),
+        ],
+      ),
+    );
+  }
+
+  getNavButton({String title, Function onPress}) {
+    return Flexible(
+      child: GestureDetector(
+        onTap: onPress,
+        child: Container(
+          // width: 150,
+          height: 50,
+          alignment: Alignment.center,
+          child: Text(title, style: TextStyle(fontSize: 20, color: mainColor)),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: accentColor,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class PlayersScore extends StatelessWidget {
   final Map players;
   PlayersScore({this.players});
   @override
   Widget build(BuildContext context) {
+    print('from playerScore: $game');
     return Column(
       children: arguments['players'].map<Widget>((player) {
         return PlayerScore(player: player);
