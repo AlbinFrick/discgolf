@@ -164,20 +164,8 @@ class _FriendAdderState extends State<FriendAdder> {
                           textColor: prefix0.accentColor,
                           child: Text('Lägg till'),
                           onPressed: () {
-<<<<<<< HEAD
-                            if (_guestController.text.length > 0) {
-                              setState(() {
-                                addedPlayers.add({
-                                  'email': _guestController.text,
-                                  'index': addedPlayers.length,
-                                  'guest': true
-                                });
-                              });
-                            }
-=======
                             addGuest();
                             FocusScope.of(context).requestFocus(FocusNode());
->>>>>>> e217d3f5adbc13220da50eb2a87e1681b2ad3bb5
                           },
                         ),
                         SizedBox(

@@ -26,14 +26,14 @@ class _PlayScreenState extends State<PlayScreen> {
 
       List playerList = List();
       Map holes = Map();
-      print(args['holes']);
+
       args['holes'].forEach((hole) {
         holes[hole['number'].toString()] = {
           'throws': hole['par'],
           'locations': []
         };
       });
-      print(holes);
+
       args['players'].forEach((player) {
         String playerID = player['id'];
         if (playerID == null)
@@ -41,8 +41,9 @@ class _PlayScreenState extends State<PlayScreen> {
         else
           playerList.add({player['id']: holes});
       });
+
       Firestore.instance
-          .collection('testgames')
+          .collection('games')
           .add({'players': playerList}).then((docRef) {
         setState(() {
           game = docRef.documentID;
@@ -58,7 +59,7 @@ class _PlayScreenState extends State<PlayScreen> {
     final Map args = ModalRoute.of(context).settings.arguments;
     if (arguments == null) arguments = args;
     setGame(args, uid);
-
+    if (game == '' || game == null) return Container(color: Colors.red);
     return Scaffold(
         appBar: AppBar(
           backgroundColor: mainColor,
@@ -88,8 +89,8 @@ class HoleList extends StatelessWidget {
     return Container(
       height: MediaQuery.of(context).size.height / 4 * 3,
       child: PageView.builder(
-        onPageChanged: (int) {
-          currentHole = int;
+        onPageChanged: (page) {
+          currentHole = page;
         },
         controller: PageController(viewportFraction: 0.95),
         scrollDirection: Axis.horizontal,
@@ -174,8 +175,10 @@ class NavButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     Function goToMap = () {
       print(arguments['holes'][currentHole]);
-      Navigator.pushNamed(context, 'mapTest',
-          arguments: {'hole': arguments['holes'][currentHole], 'gameid': game});
+      Navigator.pushNamed(context, 'mapTest', arguments: {
+        'hole': arguments['holes'][currentHole.toString()],
+        'gameid': game
+      });
     };
 
     return Container(
@@ -236,6 +239,8 @@ class PlayerScore extends StatefulWidget {
 class _PlayerScoreState extends State<PlayerScore> {
   @override
   Widget build(BuildContext context) {
+    final String uid = Provider.of<FirebaseUser>(context).uid;
+
     return Container(
         margin: EdgeInsets.only(bottom: 20),
         child: Row(
@@ -258,7 +263,26 @@ class _PlayerScoreState extends State<PlayerScore> {
                 SizedBox(
                   width: 15,
                 ),
-                Text('0', style: TextStyle(fontSize: 20, color: accentColor)),
+                StreamBuilder(
+                  stream: Firestore.instance
+                      .collection('games')
+                      .document(game)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    int playerThrows = 0;
+                    // if (snapshot.hasData) {
+                    //   snapshot.data['players'].forEach((p) {
+                    //     if (widget.player['id'] != null) {
+                    //       if (widget.player['id'] == p.keys.first) {}
+                    //     }
+                    //     print(p[uid][currentHole.toString()]['throws']);
+                    //   });
+                    //   // return Text(snapshot.data['players']['holes'][currentHole].toString(),
+                    //   // style: TextStyle(fontSize: 15, color: Colors.white));
+                    // }
+                    return Container();
+                  },
+                ),
                 SizedBox(
                   width: 15,
                 ),
