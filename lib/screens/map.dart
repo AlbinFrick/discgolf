@@ -46,6 +46,8 @@ class _MyAppState extends State<MapTest> {
   BitmapDescriptor goalIcon;
   BitmapDescriptor teeIcon;
   BitmapDescriptor discLandingMarkerIcon;
+  BitmapDescriptor playerIcon;
+  List<BitmapDescriptor> landingMarkerIcons = List();
   Timer timer;
   String distanceToGoal = "";
   bool throwsVisible = false;
@@ -53,6 +55,7 @@ class _MyAppState extends State<MapTest> {
   @override
   void initState() {
     super.initState();
+    initIcons();
     _geolocator = Geolocator();
     checkPermission();
     _position = Position(latitude: 63.836711, longitude: 20.313654);
@@ -60,7 +63,7 @@ class _MyAppState extends State<MapTest> {
     playerMarker = Marker(
         markerId: MarkerId("Player Location"),
         anchor: const Offset(0.5, 0.5),
-        icon: discLandingMarkerIcon,
+        icon: playerIcon,
         position: playerPosition);
     markers.add(playerMarker);
     LocationOptions locationOptions =
@@ -72,8 +75,30 @@ class _MyAppState extends State<MapTest> {
       updatePlayerMarker(playerPosition);
     });
 
-    
-    calculateCameraPosition();
+    dashedPattern.add(PatternItem.dash(20));
+    dashedPattern.add(PatternItem.gap(20));
+
+    // Adding tee to first player position.
+    playerLatLng.add(teePosition);
+    dashedLatLng.add(goalPosition);
+    _loadDistanceLinesDashed();
+  }
+
+  void initIcons() {
+    for (int i = 0; i < 2; i++) {
+      print('assets/images/icon_landingmarker${i + 1}.png');
+      BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(60, 60)),
+              'assets/images/icon_landingmarker${i + 1}.png')
+          .then((onValue) {
+        landingMarkerIcons.add(onValue);
+      });
+    }
+
+    BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
+            'assets/images/icon_playermarker.png')
+        .then((onValue) {
+      playerIcon = onValue;
+    });
 
     BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
             'assets/images/icon_goal.png')
@@ -92,14 +117,6 @@ class _MyAppState extends State<MapTest> {
         .then((onValue) {
       discLandingMarkerIcon = onValue;
     });
-
-    dashedPattern.add(PatternItem.dash(20));
-    dashedPattern.add(PatternItem.gap(20));
-
-    // Adding tee to first player position.
-    playerLatLng.add(teePosition);
-    dashedLatLng.add(goalPosition);
-    _loadDistanceLinesDashed();
   }
 
   @override
@@ -130,15 +147,7 @@ class _MyAppState extends State<MapTest> {
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
-    mapController.animateCamera(
-      CameraUpdate.newLatLngBounds(
-        LatLngBounds(
-          southwest: southWest,
-          northeast: northEast,
-        ),
-        32.0,
-      ),
-    );
+    loadCameraPosition();
   }
 
   @override
@@ -164,19 +173,17 @@ class _MyAppState extends State<MapTest> {
             child: Container(
               width: width,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   ButtonTheme(
-                    minWidth: 60.0,
-                    height: 40.0,
-                    buttonColor: accentColor,
-                    child: RaisedButton(
-                      onPressed: () {
-                        toggleThrowsList();
-                      },
-                      child: Text("Kast"),
-                    ),
-                  ),
+                      minWidth: 60.0,
+                      height: 40.0,
+                      buttonColor: accentColor,
+                      child: RaisedButton(
+                          onPressed: () {
+                            toggleThrowsList();
+                          },
+                          child: getButtonText())),
                   IconButton(
                       iconSize: 60,
                       padding: const EdgeInsets.all(2),
@@ -256,6 +263,12 @@ class _MyAppState extends State<MapTest> {
     );
   }
 
+  Widget getButtonText() {
+    return (discLandingIndex > 0)
+        ? Text("${discLandingIndex}: ${throwLengths[discLandingIndex-1]}")
+        : Text("Kast");
+  }
+
   void toggleThrowsList() {
     setState(() {
       throwsVisible = !throwsVisible;
@@ -290,17 +303,17 @@ class _MyAppState extends State<MapTest> {
           markerId: MarkerId(discLandingIndex.toString()),
           infoWindow: InfoWindow(title: "Kast"),
           anchor: const Offset(0.5, 0.5),
-          icon: discLandingMarkerIcon,
+          icon: landingMarkerIcons[discLandingIndex],
           position: playerLatLng.last));
       markers.add(discLandingMarkers.last);
     });
     loadThrowDistance(origin, playerLatLng.last);
-    discLandingIndex++;
+    
   }
 
   void loadThrowDistance(LatLng from, LatLng to) async {
     double distanceInMeters = await Geolocator().distanceBetween(
-        from.latitude, from.longitude, to.latitude, to.longitude);
+        from.latitude, from.longitude, to.latitude, to.longitude).then((onValue) {discLandingIndex++; return onValue;} );
     throwLengths.add(distanceInMeters.toStringAsFixed(0));
   }
 
@@ -367,20 +380,6 @@ class _MyAppState extends State<MapTest> {
     });
   }
 
-  void updateLocation() async {
-    try {
-      Position newPosition = await Geolocator()
-          .getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
-          .timeout(new Duration(seconds: 5));
-
-      setState(() {
-        _position = newPosition;
-      });
-    } catch (e) {
-      print('Error: ${e.toString()}');
-    }
-  }
-
   void _loadDistanceLinesDashed() {
     dashedLatLng.add(playerLatLng[0]);
     dashedPolyline = (Polyline(
@@ -395,7 +394,7 @@ class _MyAppState extends State<MapTest> {
     polylines.add(dashedPolyline);
   }
 
-  void calculateCameraPosition() {
+  void loadCameraPosition() async {
     // Latitud > 0 är uppåt
     // Longitud > 0 är höger
     double deltaLat = teePosition.latitude - goalPosition.latitude;
@@ -427,6 +426,16 @@ class _MyAppState extends State<MapTest> {
     }
 
     southWest = LatLng(southWest.latitude - (10 / 111111), southWest.longitude);
+    await mapController.getVisibleRegion();
+    mapController.animateCamera(
+      CameraUpdate.newLatLngBounds(
+        LatLngBounds(
+          southwest: southWest,
+          northeast: northEast,
+        ),
+        32.0,
+      ),
+    );
   }
 
   void updatePlayerMarker(LatLng position) {
@@ -435,7 +444,7 @@ class _MyAppState extends State<MapTest> {
       playerMarker = Marker(
           markerId: MarkerId("Player Location"),
           anchor: const Offset(0.5, 0.5),
-          icon: discLandingMarkerIcon,
+          icon: playerIcon,
           position: position);
 
       markers.add(playerMarker);
