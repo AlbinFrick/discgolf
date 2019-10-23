@@ -36,50 +36,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: Colors.black,
         title: Text('Registrera'),
       ),
-      
       body: Container(
         child: new SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        reverse: true,
-        padding: EdgeInsets.fromLTRB(40, 100, 40, 0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: <Widget>[
-              textFormField('E-mail', username: true, controller: _usernameController),
-              SizedBox(
-                height: 15,
-              ),
-              textFormField('Förnamn', controller: _firstnameController),
-              SizedBox(
-                height: 15,
-              ),
-              textFormField('Efternamn', controller: _lastnameController),
-              SizedBox(
-                height: 15,
-              ),
-              textFormField('Lösenord',
-                  password: true, controller: _passwordController),
-              SizedBox(
-                height: 15,
-              ),
-              RaisedButton(
-                color: Colors.grey,
-                child: Container(
-                    width: 70, child: Center(child: Text('Registrera'))),
-                onPressed: () {
-                  register();
-                },
-              )
-            ],
+          scrollDirection: Axis.vertical,
+          reverse: true,
+          padding: EdgeInsets.fromLTRB(40, 100, 40, 0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: <Widget>[
+                textFormField('E-mail',
+                    username: true, controller: _usernameController),
+                SizedBox(
+                  height: 15,
+                ),
+                textFormField('Förnamn', controller: _firstnameController),
+                SizedBox(
+                  height: 15,
+                ),
+                textFormField('Efternamn', controller: _lastnameController),
+                SizedBox(
+                  height: 15,
+                ),
+                textFormField('Lösenord',
+                    password: true, controller: _passwordController),
+                SizedBox(
+                  height: 15,
+                ),
+                RaisedButton(
+                  color: Colors.grey,
+                  child: Container(
+                      width: 70, child: Center(child: Text('Registrera'))),
+                  onPressed: () {
+                    register();
+                  },
+                )
+              ],
+            ),
           ),
         ),
       ),
-     ),
-    ); 
+    );
   }
 
-  textFormField(label, {bool password = false, username= false, @required controller}) {
+  textFormField(label,
+      {bool password = false, username = false, @required controller}) {
     return TextFormField(
       controller: controller,
       validator: (value) {
@@ -104,28 +105,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
               OutlineInputBorder(borderSide: BorderSide(color: Colors.black))),
     );
   }
-  Function setNames = (var data){
-    print("-----------");
-    print("-----------");
-    print("-----------");
-    print("-----------");
-    print(data);
-    print("-----------");
-    print("-----------");
-    print("-----------");
-    //Firestore.instance.collection('users').document(user.uid)
-   // Map data = {firstname: _firstnamecontroller.text,
-   // lastname: _lastnamecontroller.text};
-  };
+
   register() async {
     try {
       if (_formKey.currentState.validate()) {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-            email: _usernameController.text,
-            password: _passwordController.text);
-        Navigator.pushReplacementNamed(context, 'home', arguments: {
-          'registered': true, 
-        }).then(setNames);      
+        await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+                email: _usernameController.text,
+                password: _passwordController.text)
+            .then((data) {
+          Firestore.instance
+              .collection('users')
+              .document(data.user.uid)
+              .setData({
+            "firstname": _firstnameController.text,
+            "lastname": _lastnameController.text,
+            "email": _usernameController.text,
+            "friend_requests":[],
+            "friends": []
+
+          });
+
+          Navigator.pushReplacementNamed(context, 'home', arguments: {
+            'registered': true,
+          });
+        });
       }
     } catch (e) {
       print(e);
@@ -133,4 +137,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _formKey.currentState.validate();
     }
   }
- }
+}
