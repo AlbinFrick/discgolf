@@ -121,13 +121,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             "firstname": _firstnameController.text,
             "lastname": _lastnameController.text,
             "email": _usernameController.text,
-            "friend_requests":[],
+            "friend_requests": [],
             "friends": []
-
-          });
-
-          Navigator.pushReplacementNamed(context, 'home', arguments: {
-            'registered': true,
+          }).then((onValue) {
+            Navigator.pushReplacementNamed(context, 'home', arguments: {
+              'registered': true,
+            });
           });
         });
       }
