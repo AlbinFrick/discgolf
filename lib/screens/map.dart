@@ -16,14 +16,6 @@ class _MyAppState extends State<MapTest> {
   Geolocator _geolocator;
   Position _position;
 
-  //Temp
-  final margin = const EdgeInsets.only(bottom: 10.0, right: 10.0, left: 10.0);
-  final backColor = Colors.lightGreen;
-  final text = new Text(
-    'Text here',
-    style: new TextStyle(fontSize: 50.0),
-  );
-
   static const LatLng _center = const LatLng(63.836711, 20.313654);
   final Set<Marker> markers = {};
   Marker playerMarker;
@@ -31,7 +23,6 @@ class _MyAppState extends State<MapTest> {
   final List<Marker> discLandingMarkers = List();
   final List<String> throwLengths = List();
   final List<PatternItem> dashedPattern = List();
-  //add your lat and lng where you wants to draw polyline
 
   Polyline dashedPolyline;
   Polyline playerPolyline;
@@ -50,6 +41,9 @@ class _MyAppState extends State<MapTest> {
   List<BitmapDescriptor> landingMarkerIcons = List();
   Timer timer;
   String distanceToGoal = "";
+  String playerName = "Spelarnamn";
+  String holeNumber = "00";
+  String par = "3";
   bool throwsVisible = false;
 
   @override
@@ -82,6 +76,7 @@ class _MyAppState extends State<MapTest> {
     playerLatLng.add(teePosition);
     dashedLatLng.add(goalPosition);
     _loadDistanceLinesDashed();
+    loadDistanceToGoal();
   }
 
   void initIcons() {
@@ -155,118 +150,137 @@ class _MyAppState extends State<MapTest> {
     var width = MediaQuery.of(context).size.width;
 
     return new Scaffold(
-      body: Stack(
-        children: [
-          GoogleMap(
-            polylines: polylines,
-            markers: markers,
-            onMapCreated: _onMapCreated,
-            myLocationEnabled: false,
-            mapType: MapType.satellite,
-            initialCameraPosition: CameraPosition(
-              target: LatLng(_position.latitude, _position.longitude),
-              zoom: 18.0,
+      appBar: AppBar(
+        title: Text("$playerName - Hål $holeNumber - Par $par"),
+      ),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            GoogleMap(
+              polylines: polylines,
+              markers: markers,
+              onMapCreated: _onMapCreated,
+              myLocationEnabled: false,
+              mapType: MapType.satellite,
+              initialCameraPosition: CameraPosition(
+                target: LatLng(_position.latitude, _position.longitude),
+                zoom: 18.0,
+              ),
             ),
-          ),
-          Positioned(
-            bottom: 0,
-            child: Container(
-              width: width,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  ButtonTheme(
-                      minWidth: 60.0,
-                      height: 40.0,
-                      buttonColor: accentColor,
-                      child: RaisedButton(
-                          onPressed: () {
-                            toggleThrowsList();
-                          },
-                          child: getButtonText())),
-                  IconButton(
-                      iconSize: 60,
-                      padding: const EdgeInsets.all(2),
-                      icon: Image.asset(
-                          "assets/images/button_removelanding.png",
-                          height: 80,
-                          width: 80),
-                      onPressed: () {
-                        removeDiscLanding();
-                      }),
-                  IconButton(
-                      iconSize: 80,
-                      padding: const EdgeInsets.all(2),
-                      icon: Image.asset("assets/images/button_marklanding.png",
-                          height: 100, width: 100),
-                      onPressed: () {
-                        markDiscLanding();
-                      }),
-                  IconButton(
-                      iconSize: 60,
-                      padding: const EdgeInsets.all(2),
-                      icon: Image.asset("assets/images/button_markgoal.png",
-                          height: 80, width: 80),
-                      onPressed: () {
-                        // markGoal
-                      }),
-                  Container(
-                    height: 40,
-                    width: 60,
-                    color: accentColor,
-                    child: Center(
-                      child: Text(
-                        "190m",
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+            Positioned(
+              bottom: 0,
+              child: Container(
+                width: width,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    ButtonTheme(
+                        minWidth: 80.0,
+                        height: 50.0,
+                        buttonColor: Colors.black,
+                        child: RaisedButton(
+                            onPressed: () {
+                              toggleThrowsList();
+                            },
+                            child: getButtonText())),
+                    IconButton(
+                        iconSize: 60,
+                        padding: const EdgeInsets.all(2),
+                        icon: Image.asset(
+                            "assets/images/button_removelanding.png",
+                            height: 80,
+                            width: 80),
+                        onPressed: () {
+                          removeDiscLanding();
+                        }),
+                    IconButton(
+                        iconSize: 80,
+                        padding: const EdgeInsets.all(2),
+                        icon: Image.asset(
+                            "assets/images/button_marklanding.png",
+                            height: 100,
+                            width: 100),
+                        onPressed: () {
+                          markDiscLanding();
+                        }),
+                    IconButton(
+                        iconSize: 60,
+                        padding: const EdgeInsets.all(2),
+                        icon: Image.asset("assets/images/button_markgoal.png",
+                            height: 80, width: 80),
+                        onPressed: () {
+                          // markGoal
+                        }),
+                    Container(
+                      height: 50,
+                      width: 80,
+                      color: Colors.black,
+                      child: Center(
+                        child: Text(
+                          distanceToGoal,
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          Positioned(
-            left: 0,
-            bottom: 100,
-            child: Visibility(
-              visible: throwsVisible,
-              child: Container(
-                width: 100,
-                height: 4000,
-                child: ListView.separated(
-                    reverse: true,
-                    padding: const EdgeInsets.all(8),
-                    itemCount: throwLengths.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Container(
-                        height: 30,
-                        padding: const EdgeInsets.all(4),
-                        color: accentColor,
-                        child: Text(
-                          '${index + 1}: ${throwLengths[index]}m',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                      );
-                    },
-                    separatorBuilder: (BuildContext context, int index) =>
-                        const Divider(
-                          height: 5,
-                          thickness: 2,
-                        )),
+            Positioned(
+              left: 0,
+              bottom: 100,
+              child: Visibility(
+                visible: throwsVisible,
+                child: Container(
+                  width: 100,
+                  height: 4000,
+                  child: ListView.separated(
+                      reverse: true,
+                      padding: const EdgeInsets.all(8),
+                      itemCount: throwLengths.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Container(
+                          height: 30,
+                          padding: const EdgeInsets.all(4),
+                          color: Colors.black,
+                          child: Text(
+                            '${index + 1}: ${throwLengths[index]}m',
+                            style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: accentColor),
+                          ),
+                        );
+                      },
+                      separatorBuilder: (BuildContext context, int index) =>
+                          const Divider(
+                            height: 5,
+                            thickness: 2,
+                          )),
+                ),
               ),
-            ),
-          )
-        ],
+            )
+          ],
+        ),
       ),
     );
   }
 
   Widget getButtonText() {
     return (discLandingIndex > 0)
-        ? Text("${discLandingIndex}: ${throwLengths[discLandingIndex-1]}")
-        : Text("Kast");
+        ? Text(
+            "$discLandingIndex: ${throwLengths[discLandingIndex - 1]}m",
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: accentColor),
+          )
+        : Text(
+            "Kast",
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: accentColor),
+          );
   }
 
   void toggleThrowsList() {
@@ -295,7 +309,7 @@ class _MyAppState extends State<MapTest> {
         visible: true,
         points: dashedLatLng,
         patterns: dashedPattern,
-        color: accentColor,
+        color: Colors.white,
         width: 2,
       ));
       polylines.add(dashedPolyline);
@@ -308,12 +322,17 @@ class _MyAppState extends State<MapTest> {
       markers.add(discLandingMarkers.last);
     });
     loadThrowDistance(origin, playerLatLng.last);
-    
+    loadDistanceToGoal();
   }
 
   void loadThrowDistance(LatLng from, LatLng to) async {
-    double distanceInMeters = await Geolocator().distanceBetween(
-        from.latitude, from.longitude, to.latitude, to.longitude).then((onValue) {discLandingIndex++; return onValue;} );
+    double distanceInMeters = await Geolocator()
+        .distanceBetween(
+            from.latitude, from.longitude, to.latitude, to.longitude)
+        .then((onValue) {
+      discLandingIndex++;
+      return onValue;
+    });
     throwLengths.add(distanceInMeters.toStringAsFixed(0));
   }
 
@@ -338,7 +357,7 @@ class _MyAppState extends State<MapTest> {
           visible: true,
           points: dashedLatLng,
           patterns: dashedPattern,
-          color: accentColor,
+          color: Colors.white,
           width: 2,
         ));
         polylines.add(dashedPolyline);
@@ -348,6 +367,7 @@ class _MyAppState extends State<MapTest> {
       discLandingIndex--;
     }
     throwLengths.removeLast();
+    loadDistanceToGoal();
   }
 
   void _loadTeeMarker() {
@@ -370,7 +390,7 @@ class _MyAppState extends State<MapTest> {
     });
   }
 
-  void updateDistanceToGoal() async {
+  void loadDistanceToGoal() async {
     LatLng from = playerLatLng.last;
     LatLng to = goalPosition;
     double distanceInMeters = await Geolocator().distanceBetween(
@@ -388,7 +408,7 @@ class _MyAppState extends State<MapTest> {
       //latlng is List<LatLng>
       points: dashedLatLng,
       patterns: dashedPattern,
-      color: Colors.orange,
+      color: Colors.white,
       width: 2,
     ));
     polylines.add(dashedPolyline);
@@ -433,7 +453,7 @@ class _MyAppState extends State<MapTest> {
           southwest: southWest,
           northeast: northEast,
         ),
-        32.0,
+        64.0,
       ),
     );
   }
