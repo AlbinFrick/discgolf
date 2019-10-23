@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
@@ -13,10 +14,9 @@ class MapTest extends StatefulWidget {
 class _MyAppState extends State<MapTest> {
   Completer<GoogleMapController> _controller = Completer();
   GoogleMapController mapController;
-  Geolocator _geolocator;
-  Position _position;
+  Geolocator geolocator;
+  Position position;
 
-  static const LatLng _center = const LatLng(63.836711, 20.313654);
   final Set<Marker> markers = {};
   Marker playerMarker;
   final Set<Polyline> polylines = {};
@@ -30,8 +30,8 @@ class _MyAppState extends State<MapTest> {
   List<LatLng> playerLatLng = List();
   List<LatLng> dashedLatLng = List();
   LatLng playerPosition = LatLng(63.836436, 20.314299);
-  LatLng teePosition = LatLng(63.836436, 20.314299);
-  LatLng goalPosition = LatLng(63.836826, 20.314299);
+  LatLng teePosition;
+  LatLng goalPosition;
   LatLng northEast;
   LatLng southWest;
   BitmapDescriptor goalIcon;
@@ -39,6 +39,7 @@ class _MyAppState extends State<MapTest> {
   BitmapDescriptor discLandingMarkerIcon;
   BitmapDescriptor playerIcon;
   List<BitmapDescriptor> landingMarkerIcons = List();
+  StreamSubscription<Position> positionStream;
   Timer timer;
   String distanceToGoal = "";
   String playerName = "Spelarnamn";
@@ -50,9 +51,9 @@ class _MyAppState extends State<MapTest> {
   void initState() {
     super.initState();
     initIcons();
-    _geolocator = Geolocator();
+    geolocator = Geolocator();
     checkPermission();
-    _position = Position(latitude: 63.836711, longitude: 20.313654);
+    position = Position(latitude: 63.836711, longitude: 20.313654);
 
     playerMarker = Marker(
         markerId: MarkerId("Player Location"),
@@ -62,7 +63,7 @@ class _MyAppState extends State<MapTest> {
     markers.add(playerMarker);
     LocationOptions locationOptions =
         LocationOptions(accuracy: LocationAccuracy.high, distanceFilter: 0);
-    StreamSubscription<Position> positionStream = _geolocator
+    positionStream = geolocator
         .getPositionStream(locationOptions)
         .listen((Position position) {
       playerPosition = LatLng(position.latitude, position.longitude);
@@ -73,10 +74,6 @@ class _MyAppState extends State<MapTest> {
     dashedPattern.add(PatternItem.gap(20));
 
     // Adding tee to first player position.
-    playerLatLng.add(teePosition);
-    dashedLatLng.add(goalPosition);
-    _loadDistanceLinesDashed();
-    loadDistanceToGoal();
   }
 
   void initIcons() {
@@ -99,13 +96,13 @@ class _MyAppState extends State<MapTest> {
             'assets/images/icon_goal.png')
         .then((onValue) {
       goalIcon = onValue;
-      _loadGoalMarker();
+      loadGoalMarker();
     });
     BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
             'assets/images/icon_tee.png')
         .then((onValue) {
       teeIcon = onValue;
-      _loadTeeMarker();
+      loadTeeMarker();
     });
     BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(40, 40)),
             'assets/images/icon_disclandingmarker.png')
@@ -116,63 +113,86 @@ class _MyAppState extends State<MapTest> {
 
   @override
   void dispose() {
-    timer?.cancel();
+    positionStream.cancel();
     super.dispose();
   }
 
   void checkPermission() {
-    _geolocator.checkGeolocationPermissionStatus().then((status) {
+    geolocator.checkGeolocationPermissionStatus().then((status) {
       print('status: $status');
     });
 
-    _geolocator
+    geolocator
         .checkGeolocationPermissionStatus(
             locationPermission: GeolocationPermission.locationAlways)
         .then((status) {
       print('always status: $status');
     });
 
-    _geolocator.checkGeolocationPermissionStatus(
+    geolocator.checkGeolocationPermissionStatus(
         locationPermission: GeolocationPermission.locationWhenInUse)
       ..then((status) {
         print('whenInUse status: $status');
       });
   }
 
-  void _onMapCreated(GoogleMapController controller) {
+  void onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
+    loadDistanceLinesDashed();
+    loadDistanceToGoal();
     loadCameraPosition();
+  }
+
+  void loadArgumentData(Map args) {
+    holeNumber = args['hole']['number'];
+    par = args['hole']['par'];
+    GeoPoint tee = args['hole']['tee'];
+    GeoPoint basket = args['hole']['basket'];
+    teePosition = LatLng(tee.latitude, tee.longitude);
+    goalPosition = LatLng(basket.latitude, basket.longitude);
+    playerLatLng.add(teePosition);
+    dashedLatLng.add(goalPosition);
+    
   }
 
   @override
   Widget build(BuildContext context) {
+    final Map args = ModalRoute.of(context).settings.arguments;
+    if (holeNumber == "00") {
+      loadArgumentData(args);
+    }
+
     var width = MediaQuery.of(context).size.width;
 
     return new Scaffold(
       appBar: AppBar(
-        title: Text("$playerName - Hål $holeNumber - Par $par"),
+        title: Text(
+          "$playerName, Hål $holeNumber, Par $par",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.black,
       ),
       body: SafeArea(
         child: Stack(
           children: [
-            GoogleMap(
+            (holeNumber != "00") ? GoogleMap(
               polylines: polylines,
               markers: markers,
-              onMapCreated: _onMapCreated,
+              onMapCreated: onMapCreated,
               myLocationEnabled: false,
               mapType: MapType.satellite,
               initialCameraPosition: CameraPosition(
-                target: LatLng(_position.latitude, _position.longitude),
+                target: LatLng(position.latitude, position.longitude),
                 zoom: 18.0,
               ),
-            ),
+            ) : Container(),
             Positioned(
-              bottom: 0,
+              bottom: 10,
               child: Container(
                 width: width,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: <Widget>[
                     ButtonTheme(
                         minWidth: 80.0,
@@ -184,30 +204,30 @@ class _MyAppState extends State<MapTest> {
                             },
                             child: getButtonText())),
                     IconButton(
-                        iconSize: 60,
+                        iconSize: 40,
                         padding: const EdgeInsets.all(2),
                         icon: Image.asset(
                             "assets/images/button_removelanding.png",
-                            height: 80,
-                            width: 80),
+                            height: 60,
+                            width: 60),
                         onPressed: () {
                           removeDiscLanding();
                         }),
                     IconButton(
-                        iconSize: 80,
+                        iconSize: 60,
                         padding: const EdgeInsets.all(2),
                         icon: Image.asset(
                             "assets/images/button_marklanding.png",
-                            height: 100,
-                            width: 100),
+                            height: 80,
+                            width: 80),
                         onPressed: () {
                           markDiscLanding();
                         }),
                     IconButton(
-                        iconSize: 60,
+                        iconSize: 40,
                         padding: const EdgeInsets.all(2),
                         icon: Image.asset("assets/images/button_markgoal.png",
-                            height: 80, width: 80),
+                            height: 60, width: 60),
                         onPressed: () {
                           // markGoal
                         }),
@@ -272,7 +292,7 @@ class _MyAppState extends State<MapTest> {
   Widget getButtonText() {
     return (discLandingIndex > 0)
         ? Text(
-            "$discLandingIndex: ${throwLengths[discLandingIndex - 1]}m",
+            "$discLandingIndex. ${throwLengths[discLandingIndex - 1]}m",
             style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.bold, color: accentColor),
           )
@@ -315,7 +335,7 @@ class _MyAppState extends State<MapTest> {
       polylines.add(dashedPolyline);
       discLandingMarkers.add(Marker(
           markerId: MarkerId(discLandingIndex.toString()),
-          infoWindow: InfoWindow(title: "Kast"),
+          infoWindow: InfoWindow(title: "Kast ${discLandingIndex + 1}"),
           anchor: const Offset(0.5, 0.5),
           icon: landingMarkerIcons[discLandingIndex],
           position: playerLatLng.last));
@@ -370,21 +390,22 @@ class _MyAppState extends State<MapTest> {
     loadDistanceToGoal();
   }
 
-  void _loadTeeMarker() {
+  void loadTeeMarker() {
     setState(() {
       markers.add(Marker(
           markerId: MarkerId("tee"),
-          infoWindow: InfoWindow(title: "Utslagsplats", snippet: 'Hål 3'),
+          infoWindow:
+              InfoWindow(title: "Utslagsplats", snippet: 'Hål $holeNumber'),
           icon: teeIcon,
           position: teePosition));
     });
   }
 
-  void _loadGoalMarker() {
+  void loadGoalMarker() {
     setState(() {
       markers.add(Marker(
           markerId: MarkerId("goal"),
-          infoWindow: InfoWindow(title: "Mål", snippet: 'Hål 3'),
+          infoWindow: InfoWindow(title: "Mål", snippet: 'Hål $holeNumber'),
           icon: goalIcon,
           position: goalPosition));
     });
@@ -400,7 +421,7 @@ class _MyAppState extends State<MapTest> {
     });
   }
 
-  void _loadDistanceLinesDashed() {
+  void loadDistanceLinesDashed() {
     dashedLatLng.add(playerLatLng[0]);
     dashedPolyline = (Polyline(
       polylineId: PolylineId("DistanceDashPoly".toString()),
