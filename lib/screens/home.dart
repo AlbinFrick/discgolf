@@ -1,8 +1,6 @@
-import 'dart:developer';
-
 import 'package:discgolf/screens/courses.dart';
 import 'package:discgolf/screens/feed.dart';
-import 'package:discgolf/screens/user.dart';
+import 'package:discgolf/screens/profile.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +29,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> tabs = [FeedScreen(), CoursesScreen(), UserScreen()];
+    List<Widget> tabs = [FeedScreen(), CoursesScreen(), Profile()];
     List<Widget> headers = [
       AppBar(
         backgroundColor: mainColor,
