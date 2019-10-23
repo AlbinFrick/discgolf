@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/screens/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,14 +15,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _firstnameController = TextEditingController();
+  final TextEditingController _lastnameController = TextEditingController();
 
   bool couldNotRegisterError = false;
 
   @override
   void dispose() {
     super.dispose();
-    _passwordController.dispose();
     _usernameController.dispose();
+    _passwordController.dispose();
+    _firstnameController.dispose();
+    _lastnameController.dispose();
   }
 
   @override
@@ -32,36 +37,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
         title: Text('Registrera'),
       ),
       body: Container(
-        padding: EdgeInsets.fromLTRB(40, 100, 40, 0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: <Widget>[
-              textFormField('Användare', controller: _usernameController),
-              SizedBox(
-                height: 20,
-              ),
-              textFormField('Lösenord',
-                  password: true, controller: _passwordController),
-              SizedBox(
-                height: 20,
-              ),
-              RaisedButton(
-                color: Colors.grey,
-                child: Container(
-                    width: 70, child: Center(child: Text('Registrera'))),
-                onPressed: () {
-                  register();
-                },
-              )
-            ],
+        child: new SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          reverse: true,
+          padding: EdgeInsets.fromLTRB(40, 100, 40, 0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: <Widget>[
+                textFormField('E-mail',
+                    username: true, controller: _usernameController),
+                SizedBox(
+                  height: 15,
+                ),
+                textFormField('Förnamn', controller: _firstnameController),
+                SizedBox(
+                  height: 15,
+                ),
+                textFormField('Efternamn', controller: _lastnameController),
+                SizedBox(
+                  height: 15,
+                ),
+                textFormField('Lösenord',
+                    password: true, controller: _passwordController),
+                SizedBox(
+                  height: 15,
+                ),
+                RaisedButton(
+                  color: Colors.grey,
+                  child: Container(
+                      width: 70, child: Center(child: Text('Registrera'))),
+                  onPressed: () {
+                    register();
+                  },
+                )
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  textFormField(label, {bool password = false, @required controller}) {
+  textFormField(label,
+      {bool password = false, username = false, @required controller}) {
     return TextFormField(
       controller: controller,
       validator: (value) {
@@ -70,12 +89,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
         if (couldNotRegisterError) {
           couldNotRegisterError = false;
-          return 'Fel lösenord eller användarnamn';
+          return 'Ett fel uppstod vid registrering';
         }
         return null;
       },
       autocorrect: false,
-      keyboardType: password ? TextInputType.text : TextInputType.emailAddress,
+      keyboardType: username ? TextInputType.emailAddress : TextInputType.text,
       obscureText: password,
       decoration: InputDecoration(
           prefix: SizedBox(
@@ -90,11 +109,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   register() async {
     try {
       if (_formKey.currentState.validate()) {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-            email: _usernameController.text,
-            password: _passwordController.text);
-        Navigator.pushReplacementNamed(context, 'home', arguments: {
-          'registered': true,
+        await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+                email: _usernameController.text,
+                password: _passwordController.text)
+            .then((data) {
+          Firestore.instance
+              .collection('users')
+              .document(data.user.uid)
+              .setData({
+            "firstname": _firstnameController.text,
+            "lastname": _lastnameController.text,
+            "email": _usernameController.text,
+            "friend_requests":[],
+            "friends": []
+
+          });
+
+          Navigator.pushReplacementNamed(context, 'home', arguments: {
+            'registered': true,
+          });
         });
       }
     } catch (e) {
