@@ -31,7 +31,8 @@ class CourseScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
               child: Column(
-                children: buildTracks(args['course']['tracks'], context),
+                children: buildTracks(args['course']['tracks'], context,
+                    args['course'].documentID),
               ),
             )
             // RaisedButton(
@@ -47,11 +48,13 @@ class CourseScreen extends StatelessWidget {
     );
   }
 
-  buildTracks(List<dynamic> tracks, BuildContext context) {
+  buildTracks(List<dynamic> tracks, BuildContext context, String courseID) {
     return tracks.map<Widget>((track) {
       return GestureDetector(
         onTap: () {
           print('going to invite');
+          Map args = track;
+          args['courseID'] = courseID;
           Navigator.pushNamed(context, 'inviteFriends', arguments: track);
           // Navigator.pushNamed(context, 'inviteFriends');
         },
