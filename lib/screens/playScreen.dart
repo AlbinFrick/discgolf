@@ -39,7 +39,7 @@ class _PlayScreenState extends State<PlayScreen> {
       print(arguments['players']);
       args['players'].forEach((player) {
         String playerID = player['id'];
-        if (player['guest'] != null && player['guest'])
+        if (player['guest'])
           playerList[player['firstname']] = {'holes': holes, 'guest': true};
         else {
           playerList[player['id']] = {'holes': holes};
@@ -85,6 +85,7 @@ class _PlayScreenState extends State<PlayScreen> {
   void dispose() {
     super.dispose();
     game = null;
+    arguments = null;
   }
 
   @override
@@ -92,6 +93,8 @@ class _PlayScreenState extends State<PlayScreen> {
     final String uid = Provider.of<FirebaseUser>(context).uid;
 
     final Map args = ModalRoute.of(context).settings.arguments;
+    print(args['players']);
+    print(args['players'].length);
     if (arguments == null) arguments = args;
     if (args['game'] != null) game = args['game'];
     setGame(args, uid);
@@ -99,7 +102,6 @@ class _PlayScreenState extends State<PlayScreen> {
       return Container(
         child: CupertinoActivityIndicator(radius: 30),
       );
-    print(args);
     return Scaffold(
         appBar: AppBar(
           backgroundColor: mainColor,
@@ -292,6 +294,8 @@ class PlayersScore extends StatelessWidget {
   PlayersScore({this.players});
   @override
   Widget build(BuildContext context) {
+    print('ARGS PLAYERS');
+    print(arguments['players'].length);
     return Column(
       children: arguments['players'].map<Widget>((player) {
         return PlayerScore(player: player);

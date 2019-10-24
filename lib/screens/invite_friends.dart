@@ -207,7 +207,7 @@ class _FriendAdderState extends State<FriendAdder> {
                 // widget.args['players'] = addedPlayers;
                 widget.args['players'] = setPlayerData();
                 // print(addedPlayers);
-                // print('----');
+                print(widget.args['players'].length);
                 // print(widget.args['holes']);
                 Navigator.pushNamed(context, 'play', arguments: widget.args);
               }),
