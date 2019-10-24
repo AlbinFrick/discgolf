@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 Map arguments;
 String game;
-int currentHole;
+int currentHoleIndex;
 
 class PlayScreen extends StatefulWidget {
   @override
@@ -17,11 +17,16 @@ class _PlayScreenState extends State<PlayScreen> {
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     currentHole = 0;
+=======
+    currentHoleIndex = 0;
+>>>>>>> da4272aab532ecb6d9249f5aefb656b6f72e205f
   }
 
   setGame(Map args, String uid) {
     if (game == null) {
+      print('SETTING GAME');
       game = '';
 
       Map playerList = {};
@@ -44,7 +49,7 @@ class _PlayScreenState extends State<PlayScreen> {
 
       Firestore.instance
           .collection('games')
-          .add({'players': playerList}).then((docRef) {
+          .add({'players': playerList, 'date': DateTime.now()}).then((docRef) {
         setState(() {
           game = docRef.documentID;
         });
@@ -85,10 +90,17 @@ class _PlayScreenState extends State<PlayScreen> {
   }
 }
 
-class HoleList extends StatelessWidget {
+class HoleList extends StatefulWidget {
   final Map args;
-  final double spaceBetweenCards = 10;
+
   HoleList({this.args});
+
+  @override
+  _HoleListState createState() => _HoleListState();
+}
+
+class _HoleListState extends State<HoleList> {
+  final double spaceBetweenCards = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -96,15 +108,22 @@ class HoleList extends StatelessWidget {
       height: MediaQuery.of(context).size.height / 4 * 3,
       child: PageView.builder(
         onPageChanged: (page) {
+<<<<<<< HEAD
           currentHole = page;
+=======
+          setState(() {
+            currentHoleIndex = page;
+          });
+          print('currentHoleIndex: $currentHoleIndex');
+>>>>>>> da4272aab532ecb6d9249f5aefb656b6f72e205f
         },
         controller: PageController(viewportFraction: 0.95),
         scrollDirection: Axis.horizontal,
-        itemCount: args['holes'].length,
+        itemCount: widget.args['holes'].length,
         itemBuilder: (context, index) {
           HoleCard card = HoleCard(
             width: MediaQuery.of(context).size.width - spaceBetweenCards * 4,
-            data: args['holes'][index],
+            data: widget.args['holes'][index],
           );
           return card;
         },
@@ -180,9 +199,11 @@ class NavButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Function goToMap = () {
-      print(arguments['holes'][currentHole]);
-      Navigator.pushNamed(context, 'mapTest',
-          arguments: {'hole': arguments['holes'][currentHole], 'gameid': game});
+      print(arguments['holes'][currentHoleIndex]);
+      Navigator.pushNamed(context, 'mapTest', arguments: {
+        'hole': arguments['holes'][currentHoleIndex],
+        'gameid': game
+      });
     };
 
     return Container(
@@ -259,8 +280,7 @@ class _PlayerScoreState extends State<PlayerScore> {
                   width: 10,
                 ),
                 Text(
-                    widget.player['email'].toString().substring(
-                        0, widget.player['email'].toString().indexOf('@')),
+                    '${widget.player['firstname'].toString()} ${widget.player['lastname'].toString()}',
                     style: TextStyle(fontSize: 20, color: textColor)),
               ],
             ),
@@ -272,7 +292,7 @@ class _PlayerScoreState extends State<PlayerScore> {
                   onTap: () {
                     if (throws > 0) {
                       String key =
-                          'players.$playerID.holes.$currentHole.throws';
+                          'players.$playerID.holes.${currentHoleIndex + 1}.throws';
                       Firestore.instance
                           .collection('games')
                           .document(game)
@@ -293,7 +313,7 @@ class _PlayerScoreState extends State<PlayerScore> {
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       throws = snapshot.data['players'][playerID]['holes']
-                          [currentHole.toString()]['throws'];
+                          [(currentHoleIndex + 1).toString()]['throws'];
                     }
                     return Text(throws.toString(),
                         style: TextStyle(fontSize: 15, color: Colors.white));
@@ -306,7 +326,8 @@ class _PlayerScoreState extends State<PlayerScore> {
                   action: 'increase',
                   playerID: playerID,
                   onTap: () {
-                    String key = 'players.$playerID.holes.$currentHole.throws';
+                    String key =
+                        'players.$playerID.holes.${currentHoleIndex + 1}.throws';
                     Firestore.instance
                         .collection('games')
                         .document(game)
