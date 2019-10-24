@@ -145,8 +145,9 @@ class _MyAppState extends State<MapTest> {
   }
 
   void loadArgumentData(Map args) {
-    holeNumber = args['hole']['number'];
-    par = args['hole']['par'];
+    holeNumber = args['hole']['number'].toString();
+    par = args['hole']['par'].toString();
+    print("Map.dart HÄWR KOMMER HOLENUMBER: " + holeNumber);
     GeoPoint tee = args['hole']['tee'];
     GeoPoint basket = args['hole']['basket'];
     teePosition = LatLng(tee.latitude, tee.longitude);

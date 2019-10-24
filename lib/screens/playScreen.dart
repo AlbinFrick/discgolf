@@ -91,6 +91,7 @@ class HoleList extends StatelessWidget {
       child: PageView.builder(
         onPageChanged: (page) {
           currentHole = page;
+          print("DEDBUEDBUEBDDE: " + currentHole.toString());
         },
         controller: PageController(viewportFraction: 0.95),
         scrollDirection: Axis.horizontal,
@@ -176,7 +177,7 @@ class NavButtons extends StatelessWidget {
     Function goToMap = () {
       print(arguments['holes'][currentHole]);
       Navigator.pushNamed(context, 'mapTest', arguments: {
-        'hole': arguments['holes'][currentHole.toString()],
+        'hole': arguments['holes'][currentHole],
         'gameid': game
       });
     };
