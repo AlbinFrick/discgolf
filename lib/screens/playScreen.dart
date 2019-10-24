@@ -24,22 +24,22 @@ class _PlayScreenState extends State<PlayScreen> {
     if (game == null) {
       game = '';
 
-      List playerList = List();
+      Map playerList = {};
       Map holes = Map();
 
       args['holes'].forEach((hole) {
         holes[hole['number'].toString()] = {
           'throws': hole['par'],
-          'locations': []
+          'locations': {}
         };
       });
 
       args['players'].forEach((player) {
         String playerID = player['id'];
         if (playerID == null)
-          playerList.add({uid: holes});
+          playerList[uid] = {'holes': holes};
         else
-          playerList.add({player['id']: holes});
+          playerList[player['id']] = {'holes': holes};
       });
 
       Firestore.instance
@@ -50,6 +50,12 @@ class _PlayScreenState extends State<PlayScreen> {
         });
       });
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    game = null;
   }
 
   @override
@@ -90,7 +96,7 @@ class HoleList extends StatelessWidget {
       height: MediaQuery.of(context).size.height / 4 * 3,
       child: PageView.builder(
         onPageChanged: (page) {
-          currentHole = page;
+          currentHole = page + 1;
         },
         controller: PageController(viewportFraction: 0.95),
         scrollDirection: Axis.horizontal,
@@ -175,10 +181,8 @@ class NavButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     Function goToMap = () {
       print(arguments['holes'][currentHole]);
-      Navigator.pushNamed(context, 'mapTest', arguments: {
-        'hole': arguments['holes'][currentHole],
-        'gameid': game
-      });
+      Navigator.pushNamed(context, 'mapTest',
+          arguments: {'hole': arguments['holes'][currentHole], 'gameid': game});
     };
 
     return Container(
@@ -240,6 +244,9 @@ class _PlayerScoreState extends State<PlayerScore> {
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<FirebaseUser>(context).uid;
+    int throws = 0;
+    String playerID = widget.player['id'];
+    if (playerID == null) playerID = uid;
 
     return Container(
         margin: EdgeInsets.only(bottom: 20),
@@ -259,7 +266,22 @@ class _PlayerScoreState extends State<PlayerScore> {
             ),
             Row(
               children: <Widget>[
-                RoundButton(iconData: Icons.remove),
+                RoundButton(
+                  action: 'decrease',
+                  playerID: playerID,
+                  onTap: () {
+                    if (throws > 0) {
+                      String key =
+                          'players.$playerID.holes.$currentHole.throws';
+                      Firestore.instance
+                          .collection('games')
+                          .document(game)
+                          .updateData({key: throws - 1}).then((data) {
+                        setState(() {});
+                      });
+                    }
+                  },
+                ),
                 SizedBox(
                   width: 15,
                 ),
@@ -269,24 +291,30 @@ class _PlayerScoreState extends State<PlayerScore> {
                       .document(game)
                       .snapshots(),
                   builder: (context, snapshot) {
-                    int playerThrows = 0;
-                    // if (snapshot.hasData) {
-                    //   snapshot.data['players'].forEach((p) {
-                    //     if (widget.player['id'] != null) {
-                    //       if (widget.player['id'] == p.keys.first) {}
-                    //     }
-                    //     print(p[uid][currentHole.toString()]['throws']);
-                    //   });
-                    //   // return Text(snapshot.data['players']['holes'][currentHole].toString(),
-                    //   // style: TextStyle(fontSize: 15, color: Colors.white));
-                    // }
-                    return Container();
+                    if (snapshot.hasData) {
+                      throws = snapshot.data['players'][playerID]['holes']
+                          [currentHole.toString()]['throws'];
+                    }
+                    return Text(throws.toString(),
+                        style: TextStyle(fontSize: 15, color: Colors.white));
                   },
                 ),
                 SizedBox(
                   width: 15,
                 ),
-                RoundButton(iconData: Icons.add),
+                RoundButton(
+                  action: 'increase',
+                  playerID: playerID,
+                  onTap: () {
+                    String key = 'players.$playerID.holes.$currentHole.throws';
+                    Firestore.instance
+                        .collection('games')
+                        .document(game)
+                        .updateData({key: throws + 1}).then((data) {
+                      setState(() {});
+                    });
+                  },
+                ),
               ],
             ),
           ],
@@ -295,28 +323,33 @@ class _PlayerScoreState extends State<PlayerScore> {
 }
 
 class RoundButton extends StatelessWidget {
-  final IconData iconData;
-  RoundButton({this.iconData});
+  final String action;
+  final String playerID;
+  final Function onTap;
+  RoundButton({this.action, this.playerID, this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Container(
-        width: 30,
-        height: 30,
-        padding: EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(300),
-          color: Colors.white,
-        ),
-        child: Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+          width: 30,
+          height: 30,
+          padding: EdgeInsets.all(3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(300),
-            color: Colors.black,
-          ),
-          child: Icon(
-            iconData,
             color: Colors.white,
-            size: 20,
           ),
-        ));
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(300),
+              color: Colors.black,
+            ),
+            child: Icon(
+              action == 'increase' ? Icons.add : Icons.remove,
+              color: Colors.white,
+              size: 20,
+            ),
+          )),
+    );
   }
 }

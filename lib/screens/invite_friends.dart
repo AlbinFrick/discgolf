@@ -40,6 +40,12 @@ class _InviteFriendsState extends State<InviteFriends> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    friendsData = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<FirebaseUser>(context).uid;
     if (friendsData == null) {
