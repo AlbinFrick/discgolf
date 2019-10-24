@@ -60,7 +60,12 @@ class _FeedScreenState extends State<FeedScreen> {
 
   loadUserGames(userID) {
     List<DocumentSnapshot> allGames;
-    Firestore.instance.collection('games').getDocuments().then((querySnapshot) {
+    Firestore.instance
+        .collection('games')
+        .orderBy('date', descending: true)
+        .limit(3)
+        .getDocuments()
+        .then((querySnapshot) {
       allGames = querySnapshot.documents;
       allGames.forEach((game) {
         List keys = game.data['players'].keys.toList();
@@ -109,7 +114,6 @@ class _FeedScreenState extends State<FeedScreen> {
               ),
               subtitle: Text(
                 playersByNames(game.data['players'].keys.toList()) +
-                    ', ' +
                     game.data['track'].toString() +
                     ',    ' +
                     new DateFormat.yMd()
