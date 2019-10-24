@@ -16,6 +16,7 @@ class _MyAppState extends State<MapTest> {
   GoogleMapController mapController;
   Geolocator geolocator;
   Position position;
+  
 
   final Set<Marker> markers = {};
   Marker playerMarker;
@@ -46,6 +47,7 @@ class _MyAppState extends State<MapTest> {
   String holeNumber = "00";
   String par = "3";
   bool throwsVisible = false;
+  bool reachedGoal = false;
 
   @override
   void initState() {
@@ -145,15 +147,14 @@ class _MyAppState extends State<MapTest> {
   }
 
   void loadArgumentData(Map args) {
-    holeNumber = args['hole']['number'];
-    par = args['hole']['par'];
+    holeNumber = args['hole']['number'].toString();
+    par = args['hole']['par'].toString();
     GeoPoint tee = args['hole']['tee'];
     GeoPoint basket = args['hole']['basket'];
     teePosition = LatLng(tee.latitude, tee.longitude);
     goalPosition = LatLng(basket.latitude, basket.longitude);
     playerLatLng.add(teePosition);
     dashedLatLng.add(goalPosition);
-    
   }
 
   @override
@@ -176,61 +177,75 @@ class _MyAppState extends State<MapTest> {
       body: SafeArea(
         child: Stack(
           children: [
-            (holeNumber != "00") ? GoogleMap(
-              polylines: polylines,
-              markers: markers,
-              onMapCreated: onMapCreated,
-              myLocationEnabled: false,
-              mapType: MapType.satellite,
-              initialCameraPosition: CameraPosition(
-                target: LatLng(position.latitude, position.longitude),
-                zoom: 18.0,
-              ),
-            ) : Container(),
+            (holeNumber != "00")
+                ? GoogleMap(
+                    polylines: polylines,
+                    markers: markers,
+                    onMapCreated: onMapCreated,
+                    myLocationEnabled: false,
+                    mapType: MapType.satellite,
+                    initialCameraPosition: CameraPosition(
+                      target: LatLng(position.latitude, position.longitude),
+                      zoom: 18.0,
+                    ),
+                  )
+                : Container(),
             Positioned(
               bottom: 10,
               child: Container(
                 width: width,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    ButtonTheme(
-                        minWidth: 80.0,
-                        height: 50.0,
-                        buttonColor: Colors.black,
-                        child: RaisedButton(
+                    SizedBox(
+                      width: 80,
+                      height: 50,
+                      child: ButtonTheme(
+                          minWidth: 80.0,
+                          height: 50.0,
+                          padding: const EdgeInsets.all(4),
+                          buttonColor: Colors.black,
+                          child: RaisedButton(
+                              onPressed: (discLandingIndex > 0) ? () {
+                                toggleThrowsList();
+                              } : null,
+                              child: getButtonText())),
+                    ),
+                    Row(
+                      children: <Widget>[
+                        IconButton(
+                            iconSize: 40,
+                            padding: const EdgeInsets.all(2),
+                            icon: Image.asset(
+                                "assets/images/button_removelanding.png",
+                                height: 60,
+                                width: 60),
                             onPressed: () {
-                              toggleThrowsList();
-                            },
-                            child: getButtonText())),
-                    IconButton(
-                        iconSize: 40,
-                        padding: const EdgeInsets.all(2),
-                        icon: Image.asset(
-                            "assets/images/button_removelanding.png",
-                            height: 60,
-                            width: 60),
-                        onPressed: () {
-                          removeDiscLanding();
-                        }),
-                    IconButton(
-                        iconSize: 60,
-                        padding: const EdgeInsets.all(2),
-                        icon: Image.asset(
-                            "assets/images/button_marklanding.png",
-                            height: 80,
-                            width: 80),
-                        onPressed: () {
-                          markDiscLanding();
-                        }),
-                    IconButton(
-                        iconSize: 40,
-                        padding: const EdgeInsets.all(2),
-                        icon: Image.asset("assets/images/button_markgoal.png",
-                            height: 60, width: 60),
-                        onPressed: () {
-                          // markGoal
-                        }),
+                              removeDiscLanding();
+                            }),
+                        IconButton(
+                            iconSize: 60,
+                            padding: const EdgeInsets.all(2),
+                            icon: Image.asset(
+                                "assets/images/button_marklanding.png",
+                                height: 80,
+                                width: 80),
+                                
+                            onPressed: () {
+                              markDiscLanding();
+                            }),
+                        IconButton(
+                            iconSize: 40,
+                            padding: const EdgeInsets.all(2),
+                            icon: Image.asset(
+                                "assets/images/button_markgoal.png",
+                                height: 60,
+                                width: 60),
+                            onPressed: () {
+                              markGoalLanding();
+                            }),
+                      ],
+                    ),
                     Container(
                       height: 50,
                       width: 80,
@@ -251,27 +266,31 @@ class _MyAppState extends State<MapTest> {
             ),
             Positioned(
               left: 0,
-              bottom: 100,
+              bottom: 72,
               child: Visibility(
                 visible: throwsVisible,
                 child: Container(
-                  width: 100,
+                  width: 80,
                   height: 4000,
                   child: ListView.separated(
                       reverse: true,
-                      padding: const EdgeInsets.all(8),
+                      
                       itemCount: throwLengths.length,
                       itemBuilder: (BuildContext context, int index) {
-                        return Container(
+                        return SizedBox(
                           height: 30,
-                          padding: const EdgeInsets.all(4),
-                          color: Colors.black,
-                          child: Text(
-                            '${index + 1}: ${throwLengths[index]}m',
-                            style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: accentColor),
+                          width: 60,
+                          child: Container(
+                            
+                            padding: const EdgeInsets.all(4),
+                            color: Colors.black,
+                            child: Text(
+                              '${index + 1}: ${throwLengths[index]}m',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: accentColor),
+                            ),
                           ),
                         );
                       },
@@ -307,6 +326,33 @@ class _MyAppState extends State<MapTest> {
     setState(() {
       throwsVisible = !throwsVisible;
     });
+  }
+
+  void markGoalLanding() {
+    LatLng origin = playerLatLng.last;
+    playerLatLng.add(goalPosition);
+    setState(() {
+      playerPolyline = Polyline(
+        polylineId: PolylineId("Player Polyline"),
+        visible: true,
+        points: playerLatLng,
+        color: Colors.green,
+        width: 4,
+      );
+      polylines.add(playerPolyline);
+      dashedLatLng.removeLast();
+      dashedLatLng.add(playerLatLng.last);
+      polylines.remove(dashedPolyline);
+      discLandingMarkers.add(Marker(
+          markerId: MarkerId(discLandingIndex.toString()),
+          infoWindow: InfoWindow(title: "Kast ${discLandingIndex + 1}"),
+          anchor: const Offset(0.5, 0.5),
+          icon: landingMarkerIcons[discLandingIndex],
+          position: playerLatLng.last));
+      markers.add(discLandingMarkers.last);
+    });
+    loadThrowDistance(origin, playerLatLng.last);
+    loadDistanceToGoal();
   }
 
   void markDiscLanding() {
@@ -397,6 +443,7 @@ class _MyAppState extends State<MapTest> {
           infoWindow:
               InfoWindow(title: "Utslagsplats", snippet: 'Hål $holeNumber'),
           icon: teeIcon,
+          anchor: const Offset(0.5, 0.5),
           position: teePosition));
     });
   }
@@ -407,6 +454,7 @@ class _MyAppState extends State<MapTest> {
           markerId: MarkerId("goal"),
           infoWindow: InfoWindow(title: "Mål", snippet: 'Hål $holeNumber'),
           icon: goalIcon,
+          anchor: const Offset(0.5, 0.5),
           position: goalPosition));
     });
   }
@@ -468,15 +516,17 @@ class _MyAppState extends State<MapTest> {
 
     southWest = LatLng(southWest.latitude - (10 / 111111), southWest.longitude);
     await mapController.getVisibleRegion();
-    mapController.animateCamera(
-      CameraUpdate.newLatLngBounds(
-        LatLngBounds(
-          southwest: southWest,
-          northeast: northEast,
+    Future.delayed(const Duration(milliseconds: 500), () {
+      mapController.animateCamera(
+        CameraUpdate.newLatLngBounds(
+          LatLngBounds(
+            southwest: southWest,
+            northeast: northEast,
+          ),
+          64.0,
         ),
-        64.0,
-      ),
-    );
+      );
+    });
   }
 
   void updatePlayerMarker(LatLng position) {

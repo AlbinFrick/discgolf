@@ -176,7 +176,7 @@ class NavButtons extends StatelessWidget {
     Function goToMap = () {
       print(arguments['holes'][currentHole]);
       Navigator.pushNamed(context, 'mapTest', arguments: {
-        'hole': arguments['holes'][currentHole.toString()],
+        'hole': arguments['holes'][currentHole],
         'gameid': game
       });
     };
