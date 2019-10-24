@@ -48,6 +48,12 @@ class _InviteFriendsState extends State<InviteFriends> {
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<FirebaseUser>(context).uid;
+    // Map userData;
+    // if (userSnapshot != null) {
+    //   userData = userSnapshot.data;
+    //   userData['id'] = uid;
+    // }
+    // userSnapshot['id'] = uid;
     if (friendsData == null) {
       friends = getPlayerFriends(uid);
       friends.then((data) {
@@ -58,6 +64,7 @@ class _InviteFriendsState extends State<InviteFriends> {
     }
     final Map args = ModalRoute.of(context).settings.arguments;
 
+    // print(userData.toString());
     return Scaffold(
       appBar: AppBar(
         title: Text(args['name']),
@@ -209,7 +216,7 @@ class _FriendAdderState extends State<FriendAdder> {
     if (_guestController.text.length > 0) {
       setState(() {
         addedPlayers.add({
-          'email': _guestController.text,
+          'firstname': _guestController.text,
           'index': addedPlayers.length,
           'guest': true
         });
@@ -289,6 +296,8 @@ class FriendCard extends StatelessWidget {
       this.dismissable = false});
   @override
   Widget build(BuildContext context) {
+    String lastname = friend['lastname'];
+    if (lastname == null) lastname = '';
     Card friendCard = Card(
       elevation: 4,
       color: mainColor,
@@ -303,7 +312,7 @@ class FriendCard extends StatelessWidget {
                   width: 0,
                 ),
           title: Text(
-            friend['email'],
+            '${friend['firstname']} $lastname',
             style: TextStyle(
                 fontSize: 15, color: accentColor, fontWeight: FontWeight.bold),
           )),

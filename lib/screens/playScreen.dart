@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -22,10 +23,10 @@ class _PlayScreenState extends State<PlayScreen> {
 
   setGame(Map args, String uid) {
     if (game == null) {
-      print('SETTING GAME');
       game = '';
 
       Map playerList = {};
+      List<String> invitableFriends = List();
       Map holes = Map();
 
       args['holes'].forEach((hole) {
@@ -35,22 +36,50 @@ class _PlayScreenState extends State<PlayScreen> {
         };
       });
 
+      print(arguments['players']);
       args['players'].forEach((player) {
         String playerID = player['id'];
-        if (playerID == null)
+        if (player['guest'] != null && player['guest'])
+          playerList[player['firstname']] = {'holes': holes, 'guest': true};
+        else if (playerID == null) {
+          // arguments['players'][]
           playerList[uid] = {'holes': holes};
-        else
+        } else {
           playerList[player['id']] = {'holes': holes};
+          invitableFriends.add(player['id']);
+        }
       });
 
-      Firestore.instance
-          .collection('games')
-          .add({'players': playerList, 'date': DateTime.now()}).then((docRef) {
+      Firestore.instance.collection('games').add({
+        'players': playerList,
+        'date': DateTime.now(),
+        'courseID': args['courseID'],
+        'track': args['name']
+      }).then((docRef) {
         setState(() {
           game = docRef.documentID;
         });
+        sendInvites(invitableFriends);
       });
     }
+  }
+
+  sendInvites(List<String> friends) {
+    friends.forEach((friend) {
+      Firestore.instance.collection('users').document(friend).get().then((doc) {
+        List gamerequests = List();
+        if (doc.data['gamerequests'] != null) {
+          doc.data['gamerequests'].forEach((gr) {
+            gamerequests.add(gr);
+          });
+        }
+        gamerequests.add({'gameID': game, 'arguments': arguments});
+        Firestore.instance
+            .collection('users')
+            .document(friend)
+            .updateData({'gamerequests': gamerequests});
+      });
+    });
   }
 
   @override
@@ -65,8 +94,12 @@ class _PlayScreenState extends State<PlayScreen> {
 
     final Map args = ModalRoute.of(context).settings.arguments;
     if (arguments == null) arguments = args;
+    if (args['game'] != null) game = args['game'];
     setGame(args, uid);
-    if (game == '' || game == null) return Container(color: Colors.red);
+    if (game == '' || game == null)
+      return Container(
+        child: CupertinoActivityIndicator(radius: 30),
+      );
     return Scaffold(
         appBar: AppBar(
           backgroundColor: mainColor,
@@ -107,7 +140,6 @@ class _HoleListState extends State<HoleList> {
           setState(() {
             currentHoleIndex = page;
           });
-          print('currentHoleIndex: $currentHoleIndex');
         },
         controller: PageController(viewportFraction: 0.95),
         scrollDirection: Axis.horizontal,
@@ -191,7 +223,6 @@ class NavButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Function goToMap = () {
-      print(arguments['holes'][currentHoleIndex]);
       Navigator.pushNamed(context, 'mapTest', arguments: {
         'hole': arguments['holes'][currentHoleIndex],
         'gameid': game
@@ -237,7 +268,6 @@ class PlayersScore extends StatelessWidget {
   PlayersScore({this.players});
   @override
   Widget build(BuildContext context) {
-    print('from playerScore: $game');
     return Column(
       children: arguments['players'].map<Widget>((player) {
         return PlayerScore(player: player);
@@ -271,8 +301,9 @@ class _PlayerScoreState extends State<PlayerScore> {
                 SizedBox(
                   width: 10,
                 ),
+                //dont mind this
                 Text(
-                    '${widget.player['firstname'].toString()} ${widget.player['lastname'].toString()}',
+                    '${widget.player['firstname'].toString()} ${widget.player['lastname'] == null ? '' : widget.player['lastname'].toString()}',
                     style: TextStyle(fontSize: 20, color: textColor)),
               ],
             ),
