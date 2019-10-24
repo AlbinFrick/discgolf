@@ -17,11 +17,7 @@ class _PlayScreenState extends State<PlayScreen> {
   @override
   void initState() {
     super.initState();
-<<<<<<< HEAD
-    currentHole = 0;
-=======
     currentHoleIndex = 0;
->>>>>>> da4272aab532ecb6d9249f5aefb656b6f72e205f
   }
 
   setGame(Map args, String uid) {
@@ -108,14 +104,10 @@ class _HoleListState extends State<HoleList> {
       height: MediaQuery.of(context).size.height / 4 * 3,
       child: PageView.builder(
         onPageChanged: (page) {
-<<<<<<< HEAD
-          currentHole = page;
-=======
           setState(() {
             currentHoleIndex = page;
           });
           print('currentHoleIndex: $currentHoleIndex');
->>>>>>> da4272aab532ecb6d9249f5aefb656b6f72e205f
         },
         controller: PageController(viewportFraction: 0.95),
         scrollDirection: Axis.horizontal,

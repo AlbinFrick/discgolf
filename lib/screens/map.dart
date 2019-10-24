@@ -51,6 +51,7 @@ class _MyAppState extends State<MapTest> {
   String uid = "";
   bool throwsVisible = false;
   bool reachedGoal = false;
+  bool databaseLoaded = false;
 
   @override
   void initState() {
@@ -144,8 +145,6 @@ class _MyAppState extends State<MapTest> {
   void onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
-    loadDistanceLinesDashed();
-    loadDistanceToGoal();
     loadCameraPosition();
   }
 
@@ -159,6 +158,8 @@ class _MyAppState extends State<MapTest> {
     goalPosition = LatLng(basket.latitude, basket.longitude);
     playerLatLng.add(teePosition);
     dashedLatLng.add(goalPosition);
+    loadDistanceLinesDashed();
+    loadDistanceToGoal();
     loadDiscLandingDatabase();
   }
 
@@ -192,7 +193,7 @@ class _MyAppState extends State<MapTest> {
       body: SafeArea(
         child: Stack(
           children: [
-            (holeNumber != "00")
+            (databaseLoaded)
                 ? GoogleMap(
                     polylines: polylines,
                     markers: markers,
@@ -248,7 +249,7 @@ class _MyAppState extends State<MapTest> {
                                 height: 80,
                                 width: 80),
                             onPressed: () {
-                              markDiscLanding();
+                              markDiscLanding(playerPosition);
                             }),
                         IconButton(
                             iconSize: 40,
@@ -370,9 +371,9 @@ class _MyAppState extends State<MapTest> {
     loadDistanceToGoal();
   }
 
-  void markDiscLanding() {
+  void markDiscLanding(LatLng landingPosition) {
     LatLng origin = playerLatLng.last;
-    playerLatLng.add(LatLng(playerPosition.latitude, playerPosition.longitude));
+    playerLatLng.add(LatLng(landingPosition.latitude, landingPosition.longitude));
     setState(() {
       playerPolyline = Polyline(
         polylineId: PolylineId("Player Polyline"),
@@ -404,7 +405,7 @@ class _MyAppState extends State<MapTest> {
     });
     loadThrowDistance(origin, playerLatLng.last);
     loadDistanceToGoal();
-    storeDiscLandingDatabase(playerPosition);
+    
   }
 
   void removeDiscLanding() {
@@ -443,7 +444,7 @@ class _MyAppState extends State<MapTest> {
 
   void storeDiscLandingDatabase(LatLng discLanding) {
     GeoPoint gp = GeoPoint(discLanding.latitude, discLanding.longitude);
-    String key = 'players.$uid.holes.$holeNumber.locations';
+    String key = 'players.$uid.holes.$holeNumber.locations.$discLandingIndex';
     Firestore.instance
         .collection('games')
         .document(gameID)
@@ -455,8 +456,18 @@ class _MyAppState extends State<MapTest> {
   void loadDiscLandingDatabase() async {
     DocumentSnapshot userSnapshot =
         await Firestore.instance.collection('games').document(gameID).get();
-        var blaj = userSnapshot.data['players'][uid]['holes'][holeNumber]['locations'];
-        print(blaj);
+        Map locationsMap = userSnapshot.data['players'][uid]['holes'][holeNumber]['locations'];
+        print(locationsMap.length);
+        if (locationsMap.isNotEmpty) {
+          for (int i = 1; i < locationsMap.length+1; i++) {
+            
+            GeoPoint gp = locationsMap[i.toString()];
+            markDiscLanding(LatLng(gp.latitude,gp.longitude));
+          }
+          
+        }
+    
+    databaseLoaded = true;
     // List<GeoPoint> discLandingsList = List<GeoPoint>.from(
     //     userSnapshot.data['players'][uid]['holes'][holeNumber]['locations']);
     // print(discLandingsList.length);
@@ -471,6 +482,7 @@ class _MyAppState extends State<MapTest> {
       return onValue;
     });
     throwLengths.add(distanceInMeters.toStringAsFixed(0));
+    storeDiscLandingDatabase(to);
   }
 
   void loadTeeMarker() {
@@ -507,6 +519,7 @@ class _MyAppState extends State<MapTest> {
   }
 
   void loadDistanceLinesDashed() {
+    
     dashedLatLng.add(playerLatLng[0]);
     dashedPolyline = (Polyline(
       polylineId: PolylineId("DistanceDashPoly".toString()),
