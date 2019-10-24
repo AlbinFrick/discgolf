@@ -18,7 +18,6 @@ class _MyAppState extends State<MapTest> {
   GoogleMapController mapController;
   Geolocator geolocator;
   Position position;
-  
 
   final Set<Marker> markers = {};
   Marker playerMarker;
@@ -179,12 +178,12 @@ class _MyAppState extends State<MapTest> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Text(
-              "Hål $holeNumber"
-              ,style: TextStyle(color: Colors.white),
+              "Hål $holeNumber",
+              style: TextStyle(color: Colors.white),
             ),
             Text(
-              "Par $par"
-              ,style: TextStyle(color: Colors.white),
+              "Par $par",
+              style: TextStyle(color: Colors.white),
             ),
           ],
         ),
@@ -222,9 +221,11 @@ class _MyAppState extends State<MapTest> {
                           padding: const EdgeInsets.all(4),
                           buttonColor: Colors.black,
                           child: RaisedButton(
-                              onPressed: (discLandingIndex > 0) ? () {
-                                toggleThrowsList();
-                              } : null,
+                              onPressed: (discLandingIndex > 0)
+                                  ? () {
+                                      toggleThrowsList();
+                                    }
+                                  : null,
                               child: getButtonText())),
                     ),
                     Row(
@@ -246,7 +247,6 @@ class _MyAppState extends State<MapTest> {
                                 "assets/images/button_marklanding.png",
                                 height: 80,
                                 width: 80),
-                                
                             onPressed: () {
                               markDiscLanding();
                             }),
@@ -290,7 +290,6 @@ class _MyAppState extends State<MapTest> {
                   height: 4000,
                   child: ListView.separated(
                       reverse: true,
-                      
                       itemCount: throwLengths.length,
                       itemBuilder: (BuildContext context, int index) {
                         return SizedBox(
@@ -405,8 +404,8 @@ class _MyAppState extends State<MapTest> {
     });
     loadThrowDistance(origin, playerLatLng.last);
     loadDistanceToGoal();
+    storeDiscLandingDatabase(playerPosition);
   }
-
 
   void removeDiscLanding() {
     if (discLandingIndex > 0) {
@@ -442,22 +441,27 @@ class _MyAppState extends State<MapTest> {
     loadDistanceToGoal();
   }
 
-  void storeDiscLandingDatabase() {
-    
+  void storeDiscLandingDatabase(LatLng discLanding) {
+    GeoPoint gp = GeoPoint(discLanding.latitude, discLanding.longitude);
+    String key = 'players.$uid.holes.$holeNumber.locations';
+    Firestore.instance
+        .collection('games')
+        .document(gameID)
+        .updateData({key: gp});
   }
 
-  void removeDiscLandingDatabase() {
-    
-  }
+  void removeDiscLandingDatabase() {}
 
   void loadDiscLandingDatabase() async {
     DocumentSnapshot userSnapshot =
         await Firestore.instance.collection('games').document(gameID).get();
-    List<GeoPoint> discLandingsList = List<GeoPoint>.from(userSnapshot.data['players'][uid]['holes'][holeNumber]['locations']);
-    print(discLandingsList.length);
+        var blaj = userSnapshot.data['players'][uid]['holes'][holeNumber]['locations'];
+        print(blaj);
+    // List<GeoPoint> discLandingsList = List<GeoPoint>.from(
+    //     userSnapshot.data['players'][uid]['holes'][holeNumber]['locations']);
+    // print(discLandingsList.length);
   }
 
-  
   void loadThrowDistance(LatLng from, LatLng to) async {
     double distanceInMeters = await Geolocator()
         .distanceBetween(
