@@ -17,7 +17,7 @@ class _PlayScreenState extends State<PlayScreen> {
   @override
   void initState() {
     super.initState();
-    currentHole = 1;
+    currentHole = 0;
   }
 
   setGame(Map args, String uid) {
