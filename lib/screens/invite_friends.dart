@@ -48,6 +48,12 @@ class _InviteFriendsState extends State<InviteFriends> {
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<FirebaseUser>(context).uid;
+    // Map userData;
+    // if (userSnapshot != null) {
+    //   userData = userSnapshot.data;
+    //   userData['id'] = uid;
+    // }
+    // userSnapshot['id'] = uid;
     if (friendsData == null) {
       friends = getPlayerFriends(uid);
       friends.then((data) {
@@ -58,6 +64,7 @@ class _InviteFriendsState extends State<InviteFriends> {
     }
     final Map args = ModalRoute.of(context).settings.arguments;
 
+    // print(userData.toString());
     return Scaffold(
       appBar: AppBar(
         title: Text(args['name']),

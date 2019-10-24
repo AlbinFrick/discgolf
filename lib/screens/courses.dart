@@ -24,7 +24,6 @@ class CoursesScreen extends StatelessWidget {
                 return Container();
               },
             ),
-            ListTitle('Inbjudningar'),
             GameRequestsBuilder(),
           ],
         ));
@@ -99,21 +98,27 @@ class GameRequestsBuilder extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           List gamerequests = snapshot.data['gamerequests'];
+          if (gamerequests == null) return Container();
           return Column(
-            children: gamerequests.map((gameReq) {
-              return GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, 'play', arguments: {
-                      'game': gameReq['gameID'],
-                      'players': gameReq['arguments']['players'],
-                      'holes': gameReq['arguments']['holes'],
-                      'courseID': gameReq['arguments']['courseID'],
-                      'distance': gameReq['arguments']['distance'],
-                      'name': gameReq['arguments']['name'],
-                    });
-                  },
-                  child: GameRequest(gameReq: gameReq));
-            }).toList(),
+            children: <Widget>[
+              ListTitle('Inbjudningar'),
+              Column(
+                children: gamerequests.map((gameReq) {
+                  return GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, 'play', arguments: {
+                          'game': gameReq['gameID'],
+                          'players': gameReq['arguments']['players'],
+                          'holes': gameReq['arguments']['holes'],
+                          'courseID': gameReq['arguments']['courseID'],
+                          'distance': gameReq['arguments']['distance'],
+                          'name': gameReq['arguments']['name'],
+                        });
+                      },
+                      child: GameRequest(gameReq: gameReq));
+                }).toList(),
+              ),
+            ],
           );
         }
         return Container();

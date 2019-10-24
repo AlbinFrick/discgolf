@@ -36,13 +36,15 @@ class _PlayScreenState extends State<PlayScreen> {
         };
       });
 
+      print(arguments['players']);
       args['players'].forEach((player) {
         String playerID = player['id'];
         if (player['guest'] != null && player['guest'])
           playerList[player['firstname']] = {'holes': holes, 'guest': true};
-        else if (playerID == null)
+        else if (playerID == null) {
+          // arguments['players'][]
           playerList[uid] = {'holes': holes};
-        else {
+        } else {
           playerList[player['id']] = {'holes': holes};
           invitableFriends.add(player['id']);
         }
@@ -66,14 +68,16 @@ class _PlayScreenState extends State<PlayScreen> {
     friends.forEach((friend) {
       Firestore.instance.collection('users').document(friend).get().then((doc) {
         List gamerequests = List();
-        doc.data['gamerequests'].forEach((gr) {
-          gamerequests.add(gr);
-        });
+        if (doc.data['gamerequests'] != null) {
+          doc.data['gamerequests'].forEach((gr) {
+            gamerequests.add(gr);
+          });
+        }
         gamerequests.add({'gameID': game, 'arguments': arguments});
         Firestore.instance
             .collection('users')
             .document(friend)
-            .setData({'gamerequests': gamerequests});
+            .updateData({'gamerequests': gamerequests});
       });
     });
   }
