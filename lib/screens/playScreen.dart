@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 Map arguments;
 String game;
-int currentHole;
+int currentHoleIndex;
 
 class PlayScreen extends StatefulWidget {
   @override
@@ -17,39 +18,74 @@ class _PlayScreenState extends State<PlayScreen> {
   @override
   void initState() {
     super.initState();
-    currentHole = 1;
+    currentHoleIndex = 0;
   }
 
   setGame(Map args, String uid) {
     if (game == null) {
       game = '';
 
-      List playerList = List();
+      Map playerList = {};
+      List<String> invitableFriends = List();
       Map holes = Map();
 
       args['holes'].forEach((hole) {
         holes[hole['number'].toString()] = {
           'throws': hole['par'],
-          'locations': []
+          'locations': {}
         };
       });
 
+      print(arguments['players']);
       args['players'].forEach((player) {
         String playerID = player['id'];
-        if (playerID == null)
-          playerList.add({uid: holes});
-        else
-          playerList.add({player['id']: holes});
+        if (player['guest'] != null && player['guest'])
+          playerList[player['firstname']] = {'holes': holes, 'guest': true};
+        else if (playerID == null) {
+          // arguments['players'][]
+          playerList[uid] = {'holes': holes};
+        } else {
+          playerList[player['id']] = {'holes': holes};
+          invitableFriends.add(player['id']);
+        }
       });
 
-      Firestore.instance
-          .collection('games')
-          .add({'players': playerList}).then((docRef) {
+      Firestore.instance.collection('games').add({
+        'players': playerList,
+        'date': DateTime.now(),
+        'courseID': args['courseID'],
+        'track': args['name']
+      }).then((docRef) {
         setState(() {
           game = docRef.documentID;
         });
+        sendInvites(invitableFriends);
       });
     }
+  }
+
+  sendInvites(List<String> friends) {
+    friends.forEach((friend) {
+      Firestore.instance.collection('users').document(friend).get().then((doc) {
+        List gamerequests = List();
+        if (doc.data['gamerequests'] != null) {
+          doc.data['gamerequests'].forEach((gr) {
+            gamerequests.add(gr);
+          });
+        }
+        gamerequests.add({'gameID': game, 'arguments': arguments});
+        Firestore.instance
+            .collection('users')
+            .document(friend)
+            .updateData({'gamerequests': gamerequests});
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    game = null;
   }
 
   @override
@@ -58,8 +94,12 @@ class _PlayScreenState extends State<PlayScreen> {
 
     final Map args = ModalRoute.of(context).settings.arguments;
     if (arguments == null) arguments = args;
+    if (args['game'] != null) game = args['game'];
     setGame(args, uid);
-    if (game == '' || game == null) return Container(color: Colors.red);
+    if (game == '' || game == null)
+      return Container(
+        child: CupertinoActivityIndicator(radius: 30),
+      );
     return Scaffold(
         appBar: AppBar(
           backgroundColor: mainColor,
@@ -79,10 +119,17 @@ class _PlayScreenState extends State<PlayScreen> {
   }
 }
 
-class HoleList extends StatelessWidget {
+class HoleList extends StatefulWidget {
   final Map args;
-  final double spaceBetweenCards = 10;
+
   HoleList({this.args});
+
+  @override
+  _HoleListState createState() => _HoleListState();
+}
+
+class _HoleListState extends State<HoleList> {
+  final double spaceBetweenCards = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -90,15 +137,17 @@ class HoleList extends StatelessWidget {
       height: MediaQuery.of(context).size.height / 4 * 3,
       child: PageView.builder(
         onPageChanged: (page) {
-          currentHole = page;
+          setState(() {
+            currentHoleIndex = page;
+          });
         },
         controller: PageController(viewportFraction: 0.95),
         scrollDirection: Axis.horizontal,
-        itemCount: args['holes'].length,
+        itemCount: widget.args['holes'].length,
         itemBuilder: (context, index) {
           HoleCard card = HoleCard(
             width: MediaQuery.of(context).size.width - spaceBetweenCards * 4,
-            data: args['holes'][index],
+            data: widget.args['holes'][index],
           );
           return card;
         },
@@ -174,9 +223,8 @@ class NavButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Function goToMap = () {
-      print(arguments['holes'][currentHole]);
       Navigator.pushNamed(context, 'mapTest', arguments: {
-        'hole': arguments['holes'][currentHole.toString()],
+        'hole': arguments['holes'][currentHoleIndex],
         'gameid': game
       });
     };
@@ -220,7 +268,6 @@ class PlayersScore extends StatelessWidget {
   PlayersScore({this.players});
   @override
   Widget build(BuildContext context) {
-    print('from playerScore: $game');
     return Column(
       children: arguments['players'].map<Widget>((player) {
         return PlayerScore(player: player);
@@ -240,6 +287,9 @@ class _PlayerScoreState extends State<PlayerScore> {
   @override
   Widget build(BuildContext context) {
     final String uid = Provider.of<FirebaseUser>(context).uid;
+    int throws = 0;
+    String playerID = widget.player['id'];
+    if (playerID == null) playerID = uid;
 
     return Container(
         margin: EdgeInsets.only(bottom: 20),
@@ -251,15 +301,30 @@ class _PlayerScoreState extends State<PlayerScore> {
                 SizedBox(
                   width: 10,
                 ),
+                //dont mind this
                 Text(
-                    widget.player['email'].toString().substring(
-                        0, widget.player['email'].toString().indexOf('@')),
+                    '${widget.player['firstname'].toString()} ${widget.player['lastname'] == null ? '' : widget.player['lastname'].toString()}',
                     style: TextStyle(fontSize: 20, color: textColor)),
               ],
             ),
             Row(
               children: <Widget>[
-                RoundButton(iconData: Icons.remove),
+                RoundButton(
+                  action: 'decrease',
+                  playerID: playerID,
+                  onTap: () {
+                    if (throws > 0) {
+                      String key =
+                          'players.$playerID.holes.${currentHoleIndex + 1}.throws';
+                      Firestore.instance
+                          .collection('games')
+                          .document(game)
+                          .updateData({key: throws - 1}).then((data) {
+                        setState(() {});
+                      });
+                    }
+                  },
+                ),
                 SizedBox(
                   width: 15,
                 ),
@@ -269,24 +334,31 @@ class _PlayerScoreState extends State<PlayerScore> {
                       .document(game)
                       .snapshots(),
                   builder: (context, snapshot) {
-                    int playerThrows = 0;
-                    // if (snapshot.hasData) {
-                    //   snapshot.data['players'].forEach((p) {
-                    //     if (widget.player['id'] != null) {
-                    //       if (widget.player['id'] == p.keys.first) {}
-                    //     }
-                    //     print(p[uid][currentHole.toString()]['throws']);
-                    //   });
-                    //   // return Text(snapshot.data['players']['holes'][currentHole].toString(),
-                    //   // style: TextStyle(fontSize: 15, color: Colors.white));
-                    // }
-                    return Container();
+                    if (snapshot.hasData) {
+                      throws = snapshot.data['players'][playerID]['holes']
+                          [(currentHoleIndex + 1).toString()]['throws'];
+                    }
+                    return Text(throws.toString(),
+                        style: TextStyle(fontSize: 15, color: Colors.white));
                   },
                 ),
                 SizedBox(
                   width: 15,
                 ),
-                RoundButton(iconData: Icons.add),
+                RoundButton(
+                  action: 'increase',
+                  playerID: playerID,
+                  onTap: () {
+                    String key =
+                        'players.$playerID.holes.${currentHoleIndex + 1}.throws';
+                    Firestore.instance
+                        .collection('games')
+                        .document(game)
+                        .updateData({key: throws + 1}).then((data) {
+                      setState(() {});
+                    });
+                  },
+                ),
               ],
             ),
           ],
@@ -295,28 +367,33 @@ class _PlayerScoreState extends State<PlayerScore> {
 }
 
 class RoundButton extends StatelessWidget {
-  final IconData iconData;
-  RoundButton({this.iconData});
+  final String action;
+  final String playerID;
+  final Function onTap;
+  RoundButton({this.action, this.playerID, this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Container(
-        width: 30,
-        height: 30,
-        padding: EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(300),
-          color: Colors.white,
-        ),
-        child: Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+          width: 30,
+          height: 30,
+          padding: EdgeInsets.all(3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(300),
-            color: Colors.black,
-          ),
-          child: Icon(
-            iconData,
             color: Colors.white,
-            size: 20,
           ),
-        ));
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(300),
+              color: Colors.black,
+            ),
+            child: Icon(
+              action == 'increase' ? Icons.add : Icons.remove,
+              color: Colors.white,
+              size: 20,
+            ),
+          )),
+    );
   }
 }
