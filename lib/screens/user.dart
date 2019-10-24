@@ -207,7 +207,9 @@ getFriendName(String friendID) {
         Firestore.instance.collection('users').document(friendID).snapshots(),
     builder: (context, snapshot) {
       String name = '';
-      if (snapshot.hasData) name = snapshot.data.data['email'];
+      if (snapshot.hasData)
+        name =
+            '${snapshot.data.data['firstname']} ${snapshot.data.data['lastname']}';
       return Text(name,
           style: TextStyle(color: accentColor, fontWeight: FontWeight.bold));
     },

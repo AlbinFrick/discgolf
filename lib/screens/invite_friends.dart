@@ -204,12 +204,32 @@ class _FriendAdderState extends State<FriendAdder> {
                 color: accentColor,
               ),
               onPressed: () {
-                widget.args['players'] = addedPlayers;
+                // widget.args['players'] = addedPlayers;
+                widget.args['players'] = setPlayerData();
+                // print(addedPlayers);
+                // print('----');
+                // print(widget.args['holes']);
                 Navigator.pushNamed(context, 'play', arguments: widget.args);
               }),
         )
       ],
     );
+  }
+
+  setPlayerData() {
+    final String uid = Provider.of<FirebaseUser>(context).uid;
+
+    List playerData = [];
+    addedPlayers.forEach((p) {
+      if (p['id'] == null) p['id'] = uid;
+      playerData.add({
+        'firstname': p['firstname'],
+        'lastname': p['lastname'],
+        'id': p['id'],
+        'guest': !(p['guest'] == null || p['guest'] == false)
+      });
+    });
+    return playerData;
   }
 
   void addGuest() {
