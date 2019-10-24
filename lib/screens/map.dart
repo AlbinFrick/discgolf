@@ -83,7 +83,7 @@ class _MyAppState extends State<MapTest> {
   }
 
   void initIcons() {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 11; i++) {
       print('assets/images/icon_landingmarker${i + 1}.png');
       BitmapDescriptor.fromAssetImage(ImageConfiguration(size: Size(60, 60)),
               'assets/images/icon_landingmarker${i + 1}.png')
@@ -161,6 +161,7 @@ class _MyAppState extends State<MapTest> {
     loadDistanceLinesDashed();
     loadDistanceToGoal();
     loadDiscLandingDatabase();
+    
   }
 
   @override
@@ -168,6 +169,7 @@ class _MyAppState extends State<MapTest> {
     uid = Provider.of<FirebaseUser>(context).uid;
     final Map args = ModalRoute.of(context).settings.arguments;
     if (holeNumber == "00") {
+      
       loadArgumentData(args);
     }
 
@@ -325,9 +327,9 @@ class _MyAppState extends State<MapTest> {
   }
 
   Widget getButtonText() {
-    return (discLandingIndex > 0)
+    return (discLandingIndex == throwLengths.length && discLandingIndex > 0)
         ? Text(
-            "$discLandingIndex. ${throwLengths[discLandingIndex - 1]}m",
+            "$discLandingIndex. ${throwLengths[discLandingIndex-1]}m",
             style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.bold, color: accentColor),
           )
@@ -345,9 +347,11 @@ class _MyAppState extends State<MapTest> {
   }
 
   void markGoalLanding() {
+    discLandingIndex++;
     LatLng origin = playerLatLng.last;
     playerLatLng.add(goalPosition);
     setState(() {
+      polylines.remove(playerPolyline);
       playerPolyline = Polyline(
         polylineId: PolylineId("Player Polyline"),
         visible: true,
@@ -361,20 +365,23 @@ class _MyAppState extends State<MapTest> {
       polylines.remove(dashedPolyline);
       discLandingMarkers.add(Marker(
           markerId: MarkerId(discLandingIndex.toString()),
-          infoWindow: InfoWindow(title: "Kast ${discLandingIndex + 1}"),
+          infoWindow: InfoWindow(title: "Kast $discLandingIndex"),
           anchor: const Offset(0.5, 0.5),
-          icon: landingMarkerIcons[discLandingIndex],
+          icon: landingMarkerIcons[(discLandingIndex < 11) ? discLandingIndex-1 : 10],
           position: playerLatLng.last));
       markers.add(discLandingMarkers.last);
     });
     loadThrowDistance(origin, playerLatLng.last);
     loadDistanceToGoal();
+    storeDiscLandingDatabase(goalPosition);
   }
 
   void markDiscLanding(LatLng landingPosition) {
     LatLng origin = playerLatLng.last;
+    discLandingIndex++;
     playerLatLng.add(LatLng(landingPosition.latitude, landingPosition.longitude));
     setState(() {
+      polylines.remove(playerPolyline);
       playerPolyline = Polyline(
         polylineId: PolylineId("Player Polyline"),
         visible: true,
@@ -397,14 +404,15 @@ class _MyAppState extends State<MapTest> {
       polylines.add(dashedPolyline);
       discLandingMarkers.add(Marker(
           markerId: MarkerId(discLandingIndex.toString()),
-          infoWindow: InfoWindow(title: "Kast ${discLandingIndex + 1}"),
+          infoWindow: InfoWindow(title: "Kast $discLandingIndex"),
           anchor: const Offset(0.5, 0.5),
-          icon: landingMarkerIcons[discLandingIndex],
+          icon: landingMarkerIcons[(discLandingIndex < 11) ? discLandingIndex-1 : 10],
           position: playerLatLng.last));
       markers.add(discLandingMarkers.last);
     });
     loadThrowDistance(origin, playerLatLng.last);
     loadDistanceToGoal();
+    storeDiscLandingDatabase(playerLatLng.last);
     
   }
 
@@ -436,10 +444,12 @@ class _MyAppState extends State<MapTest> {
         markers.remove(discLandingMarkers.last);
         discLandingMarkers.removeLast();
       });
+      removeDiscLandingDatabase();
       discLandingIndex--;
     }
     throwLengths.removeLast();
     loadDistanceToGoal();
+    
   }
 
   void storeDiscLandingDatabase(LatLng discLanding) {
@@ -451,7 +461,13 @@ class _MyAppState extends State<MapTest> {
         .updateData({key: gp});
   }
 
-  void removeDiscLandingDatabase() {}
+  void removeDiscLandingDatabase() {
+    String key = 'players.$uid.holes.$holeNumber.locations.$discLandingIndex';
+    Firestore.instance
+        .collection('games')
+        .document(gameID)
+        .updateData({key: FieldValue.delete()});
+  }
 
   void loadDiscLandingDatabase() async {
     DocumentSnapshot userSnapshot =
@@ -460,17 +476,21 @@ class _MyAppState extends State<MapTest> {
         print(locationsMap.length);
         if (locationsMap.isNotEmpty) {
           for (int i = 1; i < locationsMap.length+1; i++) {
-            
+
             GeoPoint gp = locationsMap[i.toString()];
-            markDiscLanding(LatLng(gp.latitude,gp.longitude));
+            LatLng pos = LatLng(gp.latitude,gp.longitude);
+            if (pos == goalPosition) {
+              markGoalLanding();
+            } else {
+              markDiscLanding(pos);
+            }
+            
           }
           
         }
     
     databaseLoaded = true;
-    // List<GeoPoint> discLandingsList = List<GeoPoint>.from(
-    //     userSnapshot.data['players'][uid]['holes'][holeNumber]['locations']);
-    // print(discLandingsList.length);
+
   }
 
   void loadThrowDistance(LatLng from, LatLng to) async {
@@ -478,11 +498,10 @@ class _MyAppState extends State<MapTest> {
         .distanceBetween(
             from.latitude, from.longitude, to.latitude, to.longitude)
         .then((onValue) {
-      discLandingIndex++;
       return onValue;
     });
     throwLengths.add(distanceInMeters.toStringAsFixed(0));
-    storeDiscLandingDatabase(to);
+    
   }
 
   void loadTeeMarker() {
