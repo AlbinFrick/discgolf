@@ -36,9 +36,7 @@ class _PlayScreenState extends State<PlayScreen> {
         };
       });
 
-      print(arguments['players']);
       args['players'].forEach((player) {
-        String playerID = player['id'];
         if (player['guest'])
           playerList[player['firstname']] = {'holes': holes, 'guest': true};
         else {
@@ -93,8 +91,6 @@ class _PlayScreenState extends State<PlayScreen> {
     final String uid = Provider.of<FirebaseUser>(context).uid;
 
     final Map args = ModalRoute.of(context).settings.arguments;
-    print(args['players']);
-    print(args['players'].length);
     if (arguments == null) arguments = args;
     if (args['game'] != null) game = args['game'];
     setGame(args, uid);
@@ -294,8 +290,6 @@ class PlayersScore extends StatelessWidget {
   PlayersScore({this.players});
   @override
   Widget build(BuildContext context) {
-    print('ARGS PLAYERS');
-    print(arguments['players'].length);
     return Column(
       children: arguments['players'].map<Widget>((player) {
         return PlayerScore(player: player);
@@ -366,8 +360,6 @@ class _PlayerScoreState extends State<PlayerScore> {
                         .snapshots(),
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
-                        print('---');
-                        print(playerID);
                         throws = snapshot.data['players'][playerID]['holes']
                             [(currentHoleIndex + 1).toString()]['throws'];
                       }

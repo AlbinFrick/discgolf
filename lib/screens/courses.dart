@@ -104,18 +104,7 @@ class GameRequestsBuilder extends StatelessWidget {
               ListTitle('Inbjudningar'),
               Column(
                 children: gamerequests.map((gameReq) {
-                  return GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, 'play', arguments: {
-                          'game': gameReq['gameID'],
-                          'players': gameReq['arguments']['players'],
-                          'holes': gameReq['arguments']['holes'],
-                          'courseID': gameReq['arguments']['courseID'],
-                          'distance': gameReq['arguments']['distance'],
-                          'name': gameReq['arguments']['name'],
-                        });
-                      },
-                      child: GameRequest(gameReq: gameReq));
+                  return GameRequest(gameReq: gameReq);
                 }).toList(),
               ),
             ],
@@ -141,16 +130,30 @@ class GameRequest extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
-              Icon(
-                Icons.check,
-                color: Colors.green,
-              ),
+              GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, 'play', arguments: {
+                      'game': gameReq['gameID'],
+                      'players': gameReq['arguments']['players'],
+                      'holes': gameReq['arguments']['holes'],
+                      'courseID': gameReq['arguments']['courseID'],
+                      'distance': gameReq['arguments']['distance'],
+                      'name': gameReq['arguments']['name'],
+                    });
+                  },
+                  child: Icon(
+                    Icons.check,
+                    color: Colors.green,
+                  )),
               SizedBox(
                 width: 20,
               ),
-              Icon(
-                Icons.close,
-                color: Colors.red,
+              GestureDetector(
+                onTap: () => _removeGameRequest(gameReq, context),
+                child: Icon(
+                  Icons.close,
+                  color: Colors.red,
+                ),
               ),
             ],
           ),
@@ -171,4 +174,19 @@ class GameRequest extends StatelessWidget {
         color: Colors.red,
         child: Text(gameReq['gameID'].toString()));
   }
+}
+
+_removeGameRequest(Map gameReq, BuildContext context) {
+  final String uid = Provider.of<FirebaseUser>(context).uid;
+  Firestore.instance.collection('users').document(uid).get().then((user) {
+    List newGameRequests = List();
+    print(user.data);
+    print('----');
+    user.data['gamerequests'].forEach((g) {
+      if (g['gameID'] != gameReq['gameID']) newGameRequests.add(g);
+    });
+    user.data['gamerequests'] = newGameRequests;
+    print(user.data);
+    Firestore.instance.collection('users').document(uid).setData(user.data);
+  });
 }

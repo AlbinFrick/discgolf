@@ -64,7 +64,6 @@ class _InviteFriendsState extends State<InviteFriends> {
     }
     final Map args = ModalRoute.of(context).settings.arguments;
 
-    // print(userData.toString());
     return Scaffold(
       appBar: AppBar(
         title: Text(args['name']),
@@ -204,11 +203,7 @@ class _FriendAdderState extends State<FriendAdder> {
                 color: accentColor,
               ),
               onPressed: () {
-                // widget.args['players'] = addedPlayers;
                 widget.args['players'] = setPlayerData();
-                // print(addedPlayers);
-                print(widget.args['players'].length);
-                // print(widget.args['holes']);
                 Navigator.pushNamed(context, 'play', arguments: widget.args);
               }),
         )
