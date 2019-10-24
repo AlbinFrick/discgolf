@@ -73,7 +73,7 @@ class _PlayScreenState extends State<PlayScreen> {
         Firestore.instance
             .collection('users')
             .document(friend)
-            .updateData({'gamerequests': gamerequests});
+            .setData({'gamerequests': gamerequests});
       });
     });
   }
