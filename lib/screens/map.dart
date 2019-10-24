@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:discgolf/utils/colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
 class MapTest extends StatefulWidget {
   @override
@@ -16,7 +18,6 @@ class _MyAppState extends State<MapTest> {
   GoogleMapController mapController;
   Geolocator geolocator;
   Position position;
-  
 
   final Set<Marker> markers = {};
   Marker playerMarker;
@@ -46,8 +47,11 @@ class _MyAppState extends State<MapTest> {
   String playerName = "Spelarnamn";
   String holeNumber = "00";
   String par = "3";
+  String gameID = "";
+  String uid = "";
   bool throwsVisible = false;
   bool reachedGoal = false;
+  bool databaseLoaded = false;
 
   @override
   void initState() {
@@ -141,24 +145,27 @@ class _MyAppState extends State<MapTest> {
   void onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
     mapController = controller;
-    loadDistanceLinesDashed();
-    loadDistanceToGoal();
     loadCameraPosition();
   }
 
   void loadArgumentData(Map args) {
     holeNumber = args['hole']['number'].toString();
     par = args['hole']['par'].toString();
+    gameID = args['gameid'].toString();
     GeoPoint tee = args['hole']['tee'];
     GeoPoint basket = args['hole']['basket'];
     teePosition = LatLng(tee.latitude, tee.longitude);
     goalPosition = LatLng(basket.latitude, basket.longitude);
     playerLatLng.add(teePosition);
     dashedLatLng.add(goalPosition);
+    loadDistanceLinesDashed();
+    loadDistanceToGoal();
+    loadDiscLandingDatabase();
   }
 
   @override
   Widget build(BuildContext context) {
+    uid = Provider.of<FirebaseUser>(context).uid;
     final Map args = ModalRoute.of(context).settings.arguments;
     if (holeNumber == "00") {
       loadArgumentData(args);
@@ -168,16 +175,25 @@ class _MyAppState extends State<MapTest> {
 
     return new Scaffold(
       appBar: AppBar(
-        title: Text(
-          "$playerName, Hål $holeNumber, Par $par",
-          style: TextStyle(color: Colors.white),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Text(
+              "Hål $holeNumber",
+              style: TextStyle(color: Colors.white),
+            ),
+            Text(
+              "Par $par",
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
         ),
         backgroundColor: Colors.black,
       ),
       body: SafeArea(
         child: Stack(
           children: [
-            (holeNumber != "00")
+            (databaseLoaded)
                 ? GoogleMap(
                     polylines: polylines,
                     markers: markers,
@@ -206,9 +222,11 @@ class _MyAppState extends State<MapTest> {
                           padding: const EdgeInsets.all(4),
                           buttonColor: Colors.black,
                           child: RaisedButton(
-                              onPressed: (discLandingIndex > 0) ? () {
-                                toggleThrowsList();
-                              } : null,
+                              onPressed: (discLandingIndex > 0)
+                                  ? () {
+                                      toggleThrowsList();
+                                    }
+                                  : null,
                               child: getButtonText())),
                     ),
                     Row(
@@ -230,9 +248,8 @@ class _MyAppState extends State<MapTest> {
                                 "assets/images/button_marklanding.png",
                                 height: 80,
                                 width: 80),
-                                
                             onPressed: () {
-                              markDiscLanding();
+                              markDiscLanding(playerPosition);
                             }),
                         IconButton(
                             iconSize: 40,
@@ -274,14 +291,13 @@ class _MyAppState extends State<MapTest> {
                   height: 4000,
                   child: ListView.separated(
                       reverse: true,
-                      
                       itemCount: throwLengths.length,
                       itemBuilder: (BuildContext context, int index) {
                         return SizedBox(
                           height: 30,
                           width: 60,
                           child: Container(
-                            
+                            alignment: Alignment.centerLeft,
                             padding: const EdgeInsets.all(4),
                             color: Colors.black,
                             child: Text(
@@ -355,9 +371,9 @@ class _MyAppState extends State<MapTest> {
     loadDistanceToGoal();
   }
 
-  void markDiscLanding() {
+  void markDiscLanding(LatLng landingPosition) {
     LatLng origin = playerLatLng.last;
-    playerLatLng.add(LatLng(playerPosition.latitude, playerPosition.longitude));
+    playerLatLng.add(LatLng(landingPosition.latitude, landingPosition.longitude));
     setState(() {
       playerPolyline = Polyline(
         polylineId: PolylineId("Player Polyline"),
@@ -389,17 +405,7 @@ class _MyAppState extends State<MapTest> {
     });
     loadThrowDistance(origin, playerLatLng.last);
     loadDistanceToGoal();
-  }
-
-  void loadThrowDistance(LatLng from, LatLng to) async {
-    double distanceInMeters = await Geolocator()
-        .distanceBetween(
-            from.latitude, from.longitude, to.latitude, to.longitude)
-        .then((onValue) {
-      discLandingIndex++;
-      return onValue;
-    });
-    throwLengths.add(distanceInMeters.toStringAsFixed(0));
+    
   }
 
   void removeDiscLanding() {
@@ -436,6 +442,49 @@ class _MyAppState extends State<MapTest> {
     loadDistanceToGoal();
   }
 
+  void storeDiscLandingDatabase(LatLng discLanding) {
+    GeoPoint gp = GeoPoint(discLanding.latitude, discLanding.longitude);
+    String key = 'players.$uid.holes.$holeNumber.locations.$discLandingIndex';
+    Firestore.instance
+        .collection('games')
+        .document(gameID)
+        .updateData({key: gp});
+  }
+
+  void removeDiscLandingDatabase() {}
+
+  void loadDiscLandingDatabase() async {
+    DocumentSnapshot userSnapshot =
+        await Firestore.instance.collection('games').document(gameID).get();
+        Map locationsMap = userSnapshot.data['players'][uid]['holes'][holeNumber]['locations'];
+        print(locationsMap.length);
+        if (locationsMap.isNotEmpty) {
+          for (int i = 1; i < locationsMap.length+1; i++) {
+            
+            GeoPoint gp = locationsMap[i.toString()];
+            markDiscLanding(LatLng(gp.latitude,gp.longitude));
+          }
+          
+        }
+    
+    databaseLoaded = true;
+    // List<GeoPoint> discLandingsList = List<GeoPoint>.from(
+    //     userSnapshot.data['players'][uid]['holes'][holeNumber]['locations']);
+    // print(discLandingsList.length);
+  }
+
+  void loadThrowDistance(LatLng from, LatLng to) async {
+    double distanceInMeters = await Geolocator()
+        .distanceBetween(
+            from.latitude, from.longitude, to.latitude, to.longitude)
+        .then((onValue) {
+      discLandingIndex++;
+      return onValue;
+    });
+    throwLengths.add(distanceInMeters.toStringAsFixed(0));
+    storeDiscLandingDatabase(to);
+  }
+
   void loadTeeMarker() {
     setState(() {
       markers.add(Marker(
@@ -470,6 +519,7 @@ class _MyAppState extends State<MapTest> {
   }
 
   void loadDistanceLinesDashed() {
+    
     dashedLatLng.add(playerLatLng[0]);
     dashedPolyline = (Polyline(
       polylineId: PolylineId("DistanceDashPoly".toString()),
