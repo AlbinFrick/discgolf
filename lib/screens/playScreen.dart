@@ -36,17 +36,12 @@ class _PlayScreenState extends State<PlayScreen> {
         };
       });
 
-      print(arguments['players']);
       args['players'].forEach((player) {
-        String playerID = player['id'];
-        if (player['guest'] != null && player['guest'])
+        if (player['guest'])
           playerList[player['firstname']] = {'holes': holes, 'guest': true};
-        else if (playerID == null) {
-          // arguments['players'][]
-          playerList[uid] = {'holes': holes};
-        } else {
+        else {
           playerList[player['id']] = {'holes': holes};
-          invitableFriends.add(player['id']);
+          if (player['id'] != uid) invitableFriends.add(player['id']);
         }
       });
 
@@ -73,6 +68,8 @@ class _PlayScreenState extends State<PlayScreen> {
             gamerequests.add(gr);
           });
         }
+        // Map newArgs = arguments;
+        // newArgs['holes'] = {};
         gamerequests.add({'gameID': game, 'arguments': arguments});
         Firestore.instance
             .collection('users')
@@ -86,6 +83,7 @@ class _PlayScreenState extends State<PlayScreen> {
   void dispose() {
     super.dispose();
     game = null;
+    arguments = null;
   }
 
   @override
@@ -198,12 +196,36 @@ class _HoleCardState extends State<HoleCard> {
             SizedBox(
               height: 10,
             ),
-            Text(
-              'Spelare',
-              style: TextStyle(color: textColor, fontSize: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Text(
+                  'Spelare',
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 20,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                Row(
+                  children: <Widget>[
+                    Text(
+                      'Kast',
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 20,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 60,
+                    )
+                  ],
+                ),
+              ],
             ),
             SizedBox(
-              height: 10,
+              height: 25,
             ),
             PlayersScore(),
           ],
@@ -298,68 +320,75 @@ class _PlayerScoreState extends State<PlayerScore> {
           children: <Widget>[
             Row(
               children: <Widget>[
-                SizedBox(
-                  width: 10,
-                ),
+                // SizedBox(
+                //   width: 10,
+                // ),
                 //dont mind this
                 Text(
                     '${widget.player['firstname'].toString()} ${widget.player['lastname'] == null ? '' : widget.player['lastname'].toString()}',
                     style: TextStyle(fontSize: 20, color: textColor)),
               ],
             ),
-            Row(
-              children: <Widget>[
-                RoundButton(
-                  action: 'decrease',
-                  playerID: playerID,
-                  onTap: () {
-                    if (throws > 0) {
+            Container(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  RoundButton(
+                    action: 'decrease',
+                    playerID: playerID,
+                    onTap: () {
+                      if (throws > 0) {
+                        String key =
+                            'players.$playerID.holes.${currentHoleIndex + 1}.throws';
+                        Firestore.instance
+                            .collection('games')
+                            .document(game)
+                            .updateData({key: throws - 1}).then((data) {
+                          setState(() {});
+                        });
+                      }
+                    },
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  StreamBuilder(
+                    stream: Firestore.instance
+                        .collection('games')
+                        .document(game)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        throws = snapshot.data['players'][playerID]['holes']
+                            [(currentHoleIndex + 1).toString()]['throws'];
+                      }
+                      return Text(throws.toString(),
+                          style: TextStyle(
+                            fontSize: 25,
+                            color: accentColor,
+                          ));
+                    },
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  RoundButton(
+                    action: 'increase',
+                    playerID: playerID,
+                    onTap: () {
                       String key =
                           'players.$playerID.holes.${currentHoleIndex + 1}.throws';
                       Firestore.instance
                           .collection('games')
                           .document(game)
-                          .updateData({key: throws - 1}).then((data) {
+                          .updateData({key: throws + 1}).then((data) {
                         setState(() {});
                       });
-                    }
-                  },
-                ),
-                SizedBox(
-                  width: 15,
-                ),
-                StreamBuilder(
-                  stream: Firestore.instance
-                      .collection('games')
-                      .document(game)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      throws = snapshot.data['players'][playerID]['holes']
-                          [(currentHoleIndex + 1).toString()]['throws'];
-                    }
-                    return Text(throws.toString(),
-                        style: TextStyle(fontSize: 15, color: Colors.white));
-                  },
-                ),
-                SizedBox(
-                  width: 15,
-                ),
-                RoundButton(
-                  action: 'increase',
-                  playerID: playerID,
-                  onTap: () {
-                    String key =
-                        'players.$playerID.holes.${currentHoleIndex + 1}.throws';
-                    Firestore.instance
-                        .collection('games')
-                        .document(game)
-                        .updateData({key: throws + 1}).then((data) {
-                      setState(() {});
-                    });
-                  },
-                ),
-              ],
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ));
@@ -378,7 +407,7 @@ class RoundButton extends StatelessWidget {
       child: Container(
           width: 30,
           height: 30,
-          padding: EdgeInsets.all(3),
+          padding: EdgeInsets.all(2),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(300),
             color: Colors.white,
@@ -390,7 +419,7 @@ class RoundButton extends StatelessWidget {
             ),
             child: Icon(
               action == 'increase' ? Icons.add : Icons.remove,
-              color: Colors.white,
+              color: accentColor,
               size: 20,
             ),
           )),

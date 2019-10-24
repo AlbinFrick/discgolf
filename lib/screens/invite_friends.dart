@@ -64,7 +64,6 @@ class _InviteFriendsState extends State<InviteFriends> {
     }
     final Map args = ModalRoute.of(context).settings.arguments;
 
-    // print(userData.toString());
     return Scaffold(
       appBar: AppBar(
         title: Text(args['name']),
@@ -204,12 +203,28 @@ class _FriendAdderState extends State<FriendAdder> {
                 color: accentColor,
               ),
               onPressed: () {
-                widget.args['players'] = addedPlayers;
+                widget.args['players'] = setPlayerData();
                 Navigator.pushNamed(context, 'play', arguments: widget.args);
               }),
         )
       ],
     );
+  }
+
+  setPlayerData() {
+    final String uid = Provider.of<FirebaseUser>(context).uid;
+
+    List playerData = [];
+    addedPlayers.forEach((p) {
+      if (p['id'] == null) p['id'] = uid;
+      playerData.add({
+        'firstname': p['firstname'],
+        'lastname': p['lastname'],
+        'id': p['id'],
+        'guest': !(p['guest'] == null || p['guest'] == false)
+      });
+    });
+    return playerData;
   }
 
   void addGuest() {
