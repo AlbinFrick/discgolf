@@ -1,6 +1,5 @@
 import 'package:discgolf/screens/courses.dart';
 import 'package:discgolf/screens/feed.dart';
-import 'package:discgolf/screens/profile.dart';
 import 'package:discgolf/screens/user.dart';
 import 'package:discgolf/utils/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
