@@ -7,19 +7,49 @@ import 'package:provider/provider.dart';
 class CoursesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final String uid = Provider.of<FirebaseUser>(context).uid;
+
     return Container(
         padding: EdgeInsets.all(10),
         // color: Colors.black87,
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
-        child: StreamBuilder(
-          stream: Firestore.instance.collection('courses').snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return coursesList(snapshot.data.documents, context);
-            }
-            return Container();
-          },
+        child: Column(
+          children: <Widget>[
+            StreamBuilder(
+              stream: Firestore.instance.collection('courses').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return coursesList(snapshot.data.documents, context);
+                }
+                return Container();
+              },
+            ),
+            StreamBuilder(
+              stream: Firestore.instance
+                  .collection('users')
+                  .document(uid)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  List gamerequests = snapshot.data['gamerequests'];
+                  return GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, 'play', arguments: {
+                          'game': gamerequests[0]['gameID'],
+                          'players': gamerequests[0]['arguments']['players'],
+                          'holes': gamerequests[0]['arguments']['holes'],
+                          'courseID': gamerequests[0]['arguments']['courseID'],
+                          'distance': gamerequests[0]['arguments']['distance'],
+                          'name': gamerequests[0]['arguments']['name'],
+                        });
+                      },
+                      child: Text(gamerequests[0].toString()));
+                }
+                return Container();
+              },
+            ),
+          ],
         ));
   }
 

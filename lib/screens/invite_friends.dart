@@ -209,7 +209,7 @@ class _FriendAdderState extends State<FriendAdder> {
     if (_guestController.text.length > 0) {
       setState(() {
         addedPlayers.add({
-          'email': _guestController.text,
+          'firstname': _guestController.text,
           'index': addedPlayers.length,
           'guest': true
         });
@@ -289,6 +289,8 @@ class FriendCard extends StatelessWidget {
       this.dismissable = false});
   @override
   Widget build(BuildContext context) {
+    String lastname = friend['lastname'];
+    if (lastname == null) lastname = '';
     Card friendCard = Card(
       elevation: 4,
       color: mainColor,
@@ -303,7 +305,7 @@ class FriendCard extends StatelessWidget {
                   width: 0,
                 ),
           title: Text(
-            friend['email'],
+            '${friend['firstname']} $lastname',
             style: TextStyle(
                 fontSize: 15, color: accentColor, fontWeight: FontWeight.bold),
           )),
