@@ -18,7 +18,7 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   //List<DocumentSnapshot> allGames;
-  List<DocumentSnapshot> userGames = new List<DocumentSnapshot>();
+  List<DocumentSnapshot> userGames;
   List<DocumentSnapshot> courses;
   List<DocumentSnapshot> users;
   String userID;
@@ -37,24 +37,67 @@ class _FeedScreenState extends State<FeedScreen> {
     });
   }
 
+  Map game;
+  bool open = false;
   @override
   Widget build(BuildContext context) {
     userID = Provider.of<FirebaseUser>(context).uid;
-    loadUserGames(userID);
-    return SingleChildScrollView(
-      child: userGames.length == 0
-          ? Container(
-              color: Colors.red,
-            )
-          : Container(
-              padding: EdgeInsets.all(10),
-              child: Column(
-                children: <Widget>[
-                  listTitle(),
-                  getLatestGames(),
-                ],
-              ),
-            ),
+    if (userGames == null) loadUserGames(userID);
+    return Container(
+      child: Column(
+        children: <Widget>[
+          SizedBox(
+            height: 10,
+          ),
+          listTitle(),
+          Stack(
+            children: <Widget>[
+              userGames == null
+                  ? Container()
+                  : OldGameList(
+                      courses: courses,
+                      userGames: userGames,
+                      users: users,
+                      onPressed: (Map g) {
+                        setState(() {
+                          game = g;
+                          open = true;
+                        });
+                      },
+                    ),
+              IgnorePointer(
+                ignoring: !open,
+                child: Stack(
+                  children: <Widget>[
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: () => setState(() {
+                        open = false;
+                      }),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height - 156,
+                      ),
+                    ),
+                    AnimatedOpacity(
+                      opacity: open ? 1 : 0,
+                      duration: Duration(milliseconds: 400),
+                      curve: Curves.easeOut,
+                      child: Container(
+                        margin: EdgeInsets.all(10),
+                        height: 450,
+                        color: mainColor,
+                        child: Text(game.toString(),
+                            style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -67,6 +110,7 @@ class _FeedScreenState extends State<FeedScreen> {
         .getDocuments()
         .then((querySnapshot) {
       allGames = querySnapshot.documents;
+      userGames = List();
       allGames.forEach((game) {
         List keys = game.data['players'].keys.toList();
         keys.forEach((key) {
@@ -82,6 +126,13 @@ class _FeedScreenState extends State<FeedScreen> {
     });
   }
 
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    userGames = null;
+  }
+
   Row listTitle() {
     return Row(
       children: <Widget>[
@@ -94,6 +145,44 @@ class _FeedScreenState extends State<FeedScreen> {
         ),
       ],
     );
+  }
+}
+
+class OldGameList extends StatelessWidget {
+  final List<DocumentSnapshot> userGames;
+  final List<DocumentSnapshot> courses;
+  final List<DocumentSnapshot> users;
+  final Function onPressed;
+  OldGameList({this.userGames, this.courses, this.users, this.onPressed});
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+        child: Column(
+      children: <Widget>[
+        userGames.length == 0
+            ? Container(
+                padding: EdgeInsets.all(30),
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: accentColor,
+                      borderRadius: BorderRadius.circular(8)),
+                  padding: EdgeInsets.all(1),
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(7)),
+                    child: Text('Du har inte spelat några spel än',
+                        style: TextStyle(fontSize: 15)),
+                  ),
+                ),
+              )
+            : Container(
+                padding: EdgeInsets.all(10),
+                child: getLatestGames(),
+              ),
+      ],
+    ));
   }
 
   getLatestGames() {
@@ -125,9 +214,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 Icons.more_vert,
                 color: textColor,
               ),
-              onTap: () {
-                print(game.documentID.toString());
-              },
+              onTap: () => onPressed(game.data),
             )
           ],
         ),
