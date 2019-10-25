@@ -161,7 +161,6 @@ class _MyAppState extends State<MapTest> {
     loadDistanceLinesDashed();
     loadDistanceToGoal();
     loadDiscLandingDatabase();
-    
   }
 
   @override
@@ -169,7 +168,6 @@ class _MyAppState extends State<MapTest> {
     uid = Provider.of<FirebaseUser>(context).uid;
     final Map args = ModalRoute.of(context).settings.arguments;
     if (holeNumber == "00") {
-      
       loadArgumentData(args);
     }
 
@@ -233,36 +231,56 @@ class _MyAppState extends State<MapTest> {
                     ),
                     Row(
                       children: <Widget>[
-                        IconButton(
+                        Opacity(
+                          opacity: (discLandingIndex > 0) ? 1 : 0.4,
+                          child: IconButton(
                             iconSize: 40,
                             padding: const EdgeInsets.all(2),
                             icon: Image.asset(
                                 "assets/images/button_removelanding.png",
                                 height: 60,
                                 width: 60),
-                            onPressed: () {
-                              removeDiscLanding();
-                            }),
-                        IconButton(
+                            onPressed: (discLandingIndex > 0)
+                                ? () {
+                                    removeDiscLanding();
+                                  }
+                                : null,
+                          ),
+                        ),
+                        Opacity(
+                          opacity:
+                              (!hasReachedGoal(playerLatLng.last)) ? 1 : 0.4,
+                          child: IconButton(
                             iconSize: 60,
                             padding: const EdgeInsets.all(2),
                             icon: Image.asset(
                                 "assets/images/button_marklanding.png",
                                 height: 80,
                                 width: 80),
-                            onPressed: () {
-                              markDiscLanding(playerPosition);
-                            }),
-                        IconButton(
+                            onPressed: (!hasReachedGoal(playerLatLng.last))
+                                ? () {
+                                    markDiscLanding(playerPosition);
+                                  }
+                                : null,
+                          ),
+                        ),
+                        Opacity(
+                          opacity:
+                              (!hasReachedGoal(playerLatLng.last)) ? 1 : 0.4,
+                          child: IconButton(
                             iconSize: 40,
                             padding: const EdgeInsets.all(2),
                             icon: Image.asset(
                                 "assets/images/button_markgoal.png",
                                 height: 60,
                                 width: 60),
-                            onPressed: () {
-                              markGoalLanding();
-                            }),
+                            onPressed: (!hasReachedGoal(playerLatLng.last))
+                                ? () {
+                                    markGoalLanding();
+                                  }
+                                : null,
+                          ),
+                        ),
                       ],
                     ),
                     Container(
@@ -329,7 +347,7 @@ class _MyAppState extends State<MapTest> {
   Widget getButtonText() {
     return (discLandingIndex == throwLengths.length && discLandingIndex > 0)
         ? Text(
-            "$discLandingIndex. ${throwLengths[discLandingIndex-1]}m",
+            "$discLandingIndex. ${throwLengths[discLandingIndex - 1]}m",
             style: TextStyle(
                 fontSize: 16, fontWeight: FontWeight.bold, color: accentColor),
           )
@@ -367,19 +385,26 @@ class _MyAppState extends State<MapTest> {
           markerId: MarkerId(discLandingIndex.toString()),
           infoWindow: InfoWindow(title: "Kast $discLandingIndex"),
           anchor: const Offset(0.5, 0.5),
-          icon: landingMarkerIcons[(discLandingIndex < 11) ? discLandingIndex-1 : 10],
+          icon: landingMarkerIcons[
+              (discLandingIndex < 11) ? discLandingIndex - 1 : 10],
           position: playerLatLng.last));
       markers.add(discLandingMarkers.last);
     });
     loadThrowDistance(origin, playerLatLng.last);
     loadDistanceToGoal();
     storeDiscLandingDatabase(goalPosition);
+    storeThrowCountDatabase();
+  }
+
+  bool hasReachedGoal(LatLng pos) {
+    return (pos == goalPosition);
   }
 
   void markDiscLanding(LatLng landingPosition) {
     LatLng origin = playerLatLng.last;
     discLandingIndex++;
-    playerLatLng.add(LatLng(landingPosition.latitude, landingPosition.longitude));
+    playerLatLng
+        .add(LatLng(landingPosition.latitude, landingPosition.longitude));
     setState(() {
       polylines.remove(playerPolyline);
       playerPolyline = Polyline(
@@ -406,14 +431,14 @@ class _MyAppState extends State<MapTest> {
           markerId: MarkerId(discLandingIndex.toString()),
           infoWindow: InfoWindow(title: "Kast $discLandingIndex"),
           anchor: const Offset(0.5, 0.5),
-          icon: landingMarkerIcons[(discLandingIndex < 11) ? discLandingIndex-1 : 10],
+          icon: landingMarkerIcons[
+              (discLandingIndex < 11) ? discLandingIndex - 1 : 10],
           position: playerLatLng.last));
       markers.add(discLandingMarkers.last);
     });
     loadThrowDistance(origin, playerLatLng.last);
     loadDistanceToGoal();
     storeDiscLandingDatabase(playerLatLng.last);
-    
   }
 
   void removeDiscLanding() {
@@ -449,7 +474,6 @@ class _MyAppState extends State<MapTest> {
     }
     throwLengths.removeLast();
     loadDistanceToGoal();
-    
   }
 
   void storeDiscLandingDatabase(LatLng discLanding) {
@@ -472,25 +496,30 @@ class _MyAppState extends State<MapTest> {
   void loadDiscLandingDatabase() async {
     DocumentSnapshot userSnapshot =
         await Firestore.instance.collection('games').document(gameID).get();
-        Map locationsMap = userSnapshot.data['players'][uid]['holes'][holeNumber]['locations'];
-        print(locationsMap.length);
-        if (locationsMap.isNotEmpty) {
-          for (int i = 1; i < locationsMap.length+1; i++) {
-
-            GeoPoint gp = locationsMap[i.toString()];
-            LatLng pos = LatLng(gp.latitude,gp.longitude);
-            if (pos == goalPosition) {
-              markGoalLanding();
-            } else {
-              markDiscLanding(pos);
-            }
-            
-          }
-          
+    Map locationsMap =
+        userSnapshot.data['players'][uid]['holes'][holeNumber]['locations'];
+    print(locationsMap.length);
+    if (locationsMap.isNotEmpty) {
+      for (int i = 1; i < locationsMap.length + 1; i++) {
+        GeoPoint gp = locationsMap[i.toString()];
+        LatLng pos = LatLng(gp.latitude, gp.longitude);
+        if (hasReachedGoal(pos)) {
+          markGoalLanding();
+        } else {
+          markDiscLanding(pos);
         }
-    
-    databaseLoaded = true;
+      }
+    }
 
+    databaseLoaded = true;
+  }
+
+  void storeThrowCountDatabase() {
+    String key = 'players.$uid.holes.$holeNumber.throws';
+    Firestore.instance
+        .collection('games')
+        .document(gameID)
+        .updateData({key: discLandingIndex});
   }
 
   void loadThrowDistance(LatLng from, LatLng to) async {
@@ -501,7 +530,6 @@ class _MyAppState extends State<MapTest> {
       return onValue;
     });
     throwLengths.add(distanceInMeters.toStringAsFixed(0));
-    
   }
 
   void loadTeeMarker() {
@@ -538,7 +566,6 @@ class _MyAppState extends State<MapTest> {
   }
 
   void loadDistanceLinesDashed() {
-    
     dashedLatLng.add(playerLatLng[0]);
     dashedPolyline = (Polyline(
       polylineId: PolylineId("DistanceDashPoly".toString()),
