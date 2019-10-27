@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 class Overview extends StatelessWidget {
   @override
@@ -10,84 +11,90 @@ class Overview extends StatelessWidget {
     return Scaffold(
         body: SafeArea(
       child: Container(
+        width: MediaQuery.of(context).size.width,
         color: Colors.grey[700],
+        alignment: Alignment.center,
         child: SingleChildScrollView(
-          child: FutureBuilder(
-            future: Firestore.instance
-                .collection('games')
-                .document(args['gameid'])
-                .get(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data.exists) {
-                List<DataColumn> dataColumns = List<DataColumn>();
-                DataColumn holes = DataColumn(
-                    label: Center(
-                  child: Text(
-                    "Hål",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                    ),
-                  ),
-                ));
-                dataColumns.add(holes);
-                args['players'].forEach((player) {
-                  DataColumn playerCol = DataColumn(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: FutureBuilder(
+              future: Firestore.instance
+                  .collection('games')
+                  .document(args['gameid'])
+                  .get(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data.exists) {
+                  List<DataColumn> dataColumns = List<DataColumn>();
+                  DataColumn holes = DataColumn(
                       label: Center(
                     child: Text(
-                      player['firstname'],
+                      "Hål",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                       ),
                     ),
                   ));
-                  dataColumns.add(playerCol);
-                });
+                  dataColumns.add(holes);
+                  args['players'].forEach((player) {
+                    DataColumn playerCol = DataColumn(
+                        label: Center(
+                      child: Text(
+                        player['firstname'],
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ));
+                    dataColumns.add(playerCol);
+                  });
 
-                List<DataRow> dataRows = List<DataRow>();
-                int length;
-                snapshot.data['players'].forEach((id, player) {
-                  length = snapshot.data['players'][id]['holes'].length;
-                });
-
-                for (int i = 1; i <= length; i++) {
-                  List<DataCell> cells = List<DataCell>();
-                  cells.add(DataCell(
-                      Center(
-                          child: Text(
-                        i.toString(),
-                        style: TextStyle(color: Colors.white),
-                      )),
-                      placeholder: true));
-
+                  List<DataRow> dataRows = List<DataRow>();
+                  int length;
                   snapshot.data['players'].forEach((id, player) {
-                    print(player['holes']);
+                    length = snapshot.data['players'][id]['holes'].length;
+                  });
+
+                  for (int i = 1; i <= length; i++) {
+                    List<DataCell> cells = List<DataCell>();
                     cells.add(DataCell(
                         Center(
-                          child: Text(
-                            player['holes'][i.toString()]['throws'].toString(),
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
+                            child: Text(
+                          i.toString(),
+                          style: TextStyle(color: Colors.white),
+                        )),
                         placeholder: true));
-                  });
-                  dataRows.add(DataRow(cells: cells));
-                }
 
-                return DataTable(
-                  columns: dataColumns,
-                  rows: dataRows,
-                );
-              }
-              return Container(
-                child: Center(
-                  child: CupertinoActivityIndicator(
-                    radius: 20,
+                    snapshot.data['players'].forEach((id, player) {
+                      print(player['holes']);
+                      cells.add(DataCell(
+                          Center(
+                            child: Text(
+                              player['holes'][i.toString()]['throws']
+                                  .toString(),
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          placeholder: true));
+                    });
+                    dataRows.add(DataRow(cells: cells));
+                  }
+
+                  return DataTable(
+                    columns: dataColumns,
+                    rows: dataRows,
+                  );
+                }
+                return Container(
+                  child: Center(
+                    child: CupertinoActivityIndicator(
+                      radius: 20,
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),
