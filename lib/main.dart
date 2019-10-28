@@ -6,6 +6,7 @@ import 'package:discgolf/screens/overview.dart';
 import 'package:discgolf/screens/playScreen.dart';
 import 'package:discgolf/screens/register.dart';
 import 'package:discgolf/screens/signin.dart';
+import 'package:discgolf/screens/test.dart';
 import 'package:discgolf/screens/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +38,7 @@ class Main extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'DiscGolf',
-        // theme: appTheme(),
+        // home: Scaffold(body: Center(child: Test())),
         home: CheckLogin(),
         routes: routes,
       ),
