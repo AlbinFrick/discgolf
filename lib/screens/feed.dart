@@ -85,7 +85,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       curve: Curves.easeOut,
                       child: Container(
                         margin: EdgeInsets.all(10),
-                        height: 450,
+                        height: 400,
                         color: mainColor,
                         child: Text(game.toString(),
                             style: TextStyle(color: Colors.white)),
