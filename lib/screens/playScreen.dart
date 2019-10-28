@@ -251,6 +251,13 @@ class NavButtons extends StatelessWidget {
       });
     };
 
+    Function goToOverview = () {
+      Navigator.pushNamed(context, 'overview', arguments: {
+        'gameid': game,
+        'players': arguments['players'],
+      });
+    };
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15),
       child: Row(
@@ -260,7 +267,7 @@ class NavButtons extends StatelessWidget {
           SizedBox(
             width: 20,
           ),
-          getNavButton(title: 'Översikt'),
+          getNavButton(title: 'Översikt', onPress: goToOverview),
         ],
       ),
     );

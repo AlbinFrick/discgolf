@@ -2,6 +2,7 @@ import 'package:discgolf/screens/course.dart';
 import 'package:discgolf/screens/home.dart';
 import 'package:discgolf/screens/invite_friends.dart';
 import 'package:discgolf/screens/map.dart';
+import 'package:discgolf/screens/overview.dart';
 import 'package:discgolf/screens/playScreen.dart';
 import 'package:discgolf/screens/register.dart';
 import 'package:discgolf/screens/signin.dart';
@@ -22,6 +23,7 @@ class Main extends StatelessWidget {
     'inviteFriends': (context) => InviteFriends(),
     'user': (context) => UserScreen(),
     'course': (context) => CourseScreen(),
+    'overview': (context) => Overview(),
   };
   @override
   Widget build(BuildContext context) {
