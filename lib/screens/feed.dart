@@ -76,7 +76,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       }),
                       child: Container(
                         width: MediaQuery.of(context).size.width,
-                        height: MediaQuery.of(context).size.height - 156,
+                        height: MediaQuery.of(context).size.height - 200,
                       ),
                     ),
                     AnimatedOpacity(
